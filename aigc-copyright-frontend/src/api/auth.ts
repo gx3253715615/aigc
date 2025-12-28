@@ -16,3 +16,11 @@ export const getUserInfo = () => {
 export const updateUser = (userData: Partial<User>) => {
   return request.put<string>('/users/profile', userData)
 }
+
+export const realnameAuth = (data: { realName: string; idNumber: string }) => {
+  return request.post<string>('/users/realname-auth', data)
+}
+
+export const getRealnameAuth = () => {
+  return request.get<any>('/users/realname-auth')
+}

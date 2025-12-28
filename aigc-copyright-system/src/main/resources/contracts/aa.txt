@@ -1,0 +1,1 @@
+bash contract2java.sh solidity -s contracts/solidity/AddressAction.sol -p com.blockchain.aigc

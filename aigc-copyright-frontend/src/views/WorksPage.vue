@@ -205,6 +205,12 @@ const viewWork = (work: Work) => {
 }
 
 const certifyWork = async (work: Work) => {
+  // Check if user is authenticated
+  if (userStore.user?.authStatus !== 'AUTH') {
+    ElMessage.warning('您尚未通过实名认证，无法确权作品')
+    return
+  }
+  
   try {
     await certifyWorkApi(work.id)
     ElMessage.success('Copyright certification successful!')
@@ -215,11 +221,23 @@ const certifyWork = async (work: Work) => {
 }
 
 const transferWork = (work: Work) => {
+  // Check if user is authenticated
+  if (userStore.user?.authStatus !== 'AUTH') {
+    ElMessage.warning('您尚未通过实名认证，无法转让版权')
+    return
+  }
+  
   transferForm.value.workId = work.workId
   transferVisible.value = true
 }
 
 const handleTransfer = async () => {
+  // Check if user is authenticated
+  if (userStore.user?.authStatus !== 'AUTH') {
+    ElMessage.warning('您尚未通过实名认证，无法转让版权')
+    return
+  }
+  
   if (!transferForm.value.toUserId) {
     ElMessage.warning('Please enter user ID')
     return

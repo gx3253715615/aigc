@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, LoginRequest, RegisterRequest } from '@/types/user'
-import { login as apiLogin, register as apiRegister, getUserInfo } from '@/api/auth'
+import { login as apiLogin, register as apiRegister, getUserInfo, realnameAuth as apiRealnameAuth, getRealnameAuth as apiGetRealnameAuth } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
@@ -62,6 +62,26 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const realnameAuth = async (realName: string, idNumber: string) => {
+    try {
+      const response = await apiRealnameAuth({ realName, idNumber })
+      // Refresh user info after realname auth
+      await checkLoginStatus()
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return { success: false, message: error.message }
+    }
+  }
+
+  const getRealnameAuthStatus = async () => {
+    try {
+      const response = await apiGetRealnameAuth()
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return { success: false, message: error.message }
+    }
+  }
+
   return {
     user,
     token,
@@ -70,6 +90,8 @@ export const useUserStore = defineStore('user', () => {
     register,
     logout,
     checkLoginStatus,
-    updateUser
+    updateUser,
+    realnameAuth,
+    getRealnameAuthStatus
   }
 })

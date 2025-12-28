@@ -53,3 +53,7 @@ logging:
   level:
     com.blockchain.aigc: debug
     org.springframework.security: debug
+
+
+contract:
+  address-action: 0xfa6ac41d0e064cfb50321de940cd7a7907b2dede

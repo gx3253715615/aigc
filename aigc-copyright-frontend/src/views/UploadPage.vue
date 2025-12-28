@@ -17,6 +17,16 @@
     <div class="main-content">
       <header class="header"><h1>Upload Work</h1></header>
 
+      <!-- Warning message for unauthenticated users -->
+      <div v-if="userStore.user?.authStatus === 'INIT'" class="warning-message">
+        <el-alert
+          title="注意：您尚未通过实名认证，无法上传作品"
+          type="warning"
+          show-icon
+          :closable="false"
+        />
+      </div>
+
       <div class="upload-content">
         <el-card class="upload-card">
           <el-upload
@@ -27,6 +37,7 @@
             :limit="1"
             :on-change="handleFileChange"
             :on-exceed="handleExceed"
+            :disabled="userStore.user?.authStatus !== 'AUTH'"
           >
             <el-icon class="upload-icon"><UploadFilled /></el-icon>
             <div class="upload-text">Drop file here or <em>click to upload</em></div>
@@ -169,6 +180,12 @@ const handleUpload = async () => {
     return
   }
 
+  // Check if user is authenticated
+  if (userStore.user?.authStatus !== 'AUTH') {
+    ElMessage.warning('您尚未通过实名认证，无法上传作品')
+    return
+  }
+
   uploading.value = true
   try {
     const formData = new FormData()
@@ -263,6 +280,11 @@ const handleReset = () => {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
+}
+.warning-message {
+  max-width: 900px;
+  margin: 0 auto 20px;
+  padding: 0 32px;
 }
 :deep(.el-upload-dragger) {
   padding: 60px 20px;

@@ -53,11 +53,15 @@
             <div class="user-avatar">
               <el-icon><User /></el-icon>
               <span>{{ userStore.user?.username || 'User' }}</span>
+              <el-tag v-if="userStore.user?.authStatus === 'INIT'" type="warning" size="small" style="margin-left: 8px;">未认证</el-tag>
+              <el-tag v-else-if="userStore.user?.authStatus === 'AUTH'" type="success" size="small" style="margin-left: 8px;">已认证</el-tag>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">Profile</el-dropdown-item>
                 <el-dropdown-item command="wallet">Wallet</el-dropdown-item>
+                <el-dropdown-item v-if="userStore.user?.authStatus === 'INIT'" command="realnameAuth" divided>Auth</el-dropdown-item>
+                <el-dropdown-item v-else-if="userStore.user?.authStatus === 'AUTH'" command="realnameAuth" divided disabled>Authenticated</el-dropdown-item>
                 <el-dropdown-item divided command="logout">Logout</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -142,6 +146,9 @@
         </div>
       </div>
     </div>
+    
+    <!-- Realname Auth Dialog -->
+    <RealnameAuthDialog v-model="showRealnameAuthDialog" @success="handleRealnameAuthSuccess" />
   </div>
 </template>
 
@@ -152,6 +159,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { getMyWorks } from '@/api/works'
 import type { Work } from '@/types/work'
+import RealnameAuthDialog from '@/components/RealnameAuthDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -160,6 +168,7 @@ const userStore = useUserStore()
 const activeMenu = computed(() => route.path)
 const loading = ref(false)
 const recentWorks = ref<Work[]>([])
+const showRealnameAuthDialog = ref(false)
 
 const stats = ref({
   totalWorks: 0,
@@ -184,7 +193,14 @@ const handleCommand = (command: string) => {
     ElMessage.info('Profile page coming soon')
   } else if (command === 'wallet') {
     ElMessage.info('Wallet page coming soon')
+  } else if (command === 'realnameAuth') {
+    showRealnameAuthDialog.value = true
   }
+}
+
+const handleRealnameAuthSuccess = () => {
+  // Refresh user status after successful realname auth
+  userStore.checkLoginStatus()
 }
 
 const handleLogout = () => {

@@ -19,8 +19,10 @@ import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import org.fisco.bcos.sdk.crypto.keypair.CryptoKeyPair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
@@ -47,6 +49,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private BlockchainService blockchainService;
+
+    @Value("${contract.address-action}")
+    private String contractAddress;
 
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> register(RegisterRequest request) {
@@ -194,12 +202,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (currentUser == null) {
             throw new RuntimeException("用户未登录");
         }
-            
+
         // 检查是否已经实名认证
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(USER_REALNAME.USER_ID.eq(currentUser.getId()));
         UserRealname existingAuth = userRealnameMapper.selectOneByQuery(queryWrapper);
-            
+
         if (existingAuth != null) {
             if (existingAuth.getVerifyStatus() == VerifyStatusEnum.PASSED) {
                 throw new RuntimeException("用户已通过实名认证");
@@ -207,47 +215,54 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                 throw new RuntimeException("实名认证已在审核中");
             }
         }
-            
+
         // 创建或更新实名认证记录
         UserRealname userRealname = (existingAuth != null) ? existingAuth : new UserRealname();
         userRealname.setUserId(currentUser.getId());
         userRealname.setRealName(realName);
         userRealname.setIdNumber(idNumber);
         userRealname.setVerifyStatus(VerifyStatusEnum.PENDING);
-            
+
         if (existingAuth != null) {
             userRealnameMapper.update(userRealname);
         } else {
             userRealnameMapper.insert(userRealname);
         }
-            
+
         // TODO: 调用第三方实名认证接口
         // 模拟认证通过，直接更新状态为通过
         userRealname.setVerifyStatus(VerifyStatusEnum.PASSED);
         userRealname.setVerifyTime(LocalDateTime.now());
         userRealnameMapper.update(userRealname);
-            
+
         // 检查用户是否已有钱包，如果没有则创建
         QueryWrapper walletQuery = QueryWrapper.create()
                 .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
         UserWallet existingWallet = userWalletMapper.selectOneByQuery(walletQuery);
-            
+
+        CryptoKeyPair cryptoKeyPair = null;
         if (existingWallet == null) {
-            // 生成钱包地址（简化版，实际应该使用真实的区块链钱包生成）
-            String uuid = IdUtil.simpleUUID();
-            String walletAddress = "0x" + uuid.substring(0, Math.min(40, uuid.length()));
+            // 创建钱包地址
+            cryptoKeyPair = blockchainService.createCryptoKeyPair();
+            String walletAddress = cryptoKeyPair.getAddress();
             UserWallet userWallet = new UserWallet();
             userWallet.setUserId(currentUser.getId());
             userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
             userWallet.setWalletAddress(walletAddress);
             userWalletMapper.insert(userWallet);
         }
-            
+
         // 更新用户认证状态
         User updateUser = new User();
         updateUser.setId(currentUser.getId());
         updateUser.setAuthStatus(UserAuthEnum.AUTH);
         userMapper.update(updateUser);
+
+        try {
+            blockchainService.doAction("0xfa6ac41d0e064cfb50321de940cd7a7907b2dede", cryptoKeyPair);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public UserRealname getRealnameAuth() {
