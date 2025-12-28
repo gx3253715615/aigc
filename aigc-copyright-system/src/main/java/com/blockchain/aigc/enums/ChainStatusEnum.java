@@ -1,0 +1,11 @@
+package com.blockchain.aigc.enums;
+
+/**
+ * @author gaoxinyu
+ * @date 2025/12/28 10:54
+ **/
+public enum ChainStatusEnum {
+    PENDING,
+    SUCCESS,
+    FAILED
+}
