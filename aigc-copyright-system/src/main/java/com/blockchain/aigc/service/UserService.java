@@ -5,11 +5,14 @@ import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
 import com.blockchain.aigc.dto.UserProfileDTO;
 import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.entity.UserRealname;
 import com.blockchain.aigc.entity.UserWallet;
 import com.blockchain.aigc.enums.ChainTypeEnum;
 import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.enums.UserStatusEnum;
+import com.blockchain.aigc.enums.VerifyStatusEnum;
 import com.blockchain.aigc.mapper.UserMapper;
+import com.blockchain.aigc.mapper.UserRealnameMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.utils.JwtUtil;
 import com.blockchain.aigc.utils.UserUtil;
@@ -22,9 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.blockchain.aigc.entity.table.UserRealnameTableDef.USER_REALNAME;
 import static com.blockchain.aigc.entity.table.UserTableDef.USER;
 import static com.blockchain.aigc.entity.table.UserWalletTableDef.USER_WALLET;
 
@@ -36,6 +41,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     @Autowired
     private UserWalletMapper userWalletMapper;
+
+    @Autowired
+    private UserRealnameMapper userRealnameMapper;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -56,18 +64,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         user.setPassword(DigestUtils.md5DigestAsHex(request.getPassword().getBytes()));
         user.setPhone(request.getPhone());
         user.setEmail(request.getEmail());
-        user.setAuthStatus(UserAuthEnum.INIT);
+        user.setAuthStatus(UserAuthEnum.INIT);  // 用户初始状态为未认证
         user.setStatus(UserStatusEnum.ENABLE);
 
         userMapper.insert(user);
 
-        // 生成钱包地址（简化版，实际应该使用真实的区块链钱包生成）
-        String walletAddress = "0x" + IdUtil.simpleUUID().substring(0, 40);
-        UserWallet userWallet = new UserWallet();
-        userWallet.setUserId(user.getId());
-        userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
-        userWallet.setWalletAddress(walletAddress);
-        userWalletMapper.insert(userWallet);
+        // 不再创建钱包地址，等待实名认证时再创建
 
         // 生成token (使用userId)
         String token = jwtUtil.generateToken(user.getId());
@@ -76,7 +78,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         result.put("token", token);
         result.put("userId", user.getId());
         result.put("username", user.getUsername());
-        result.put("walletAddress", walletAddress);
+        result.put("walletAddress", null);  // 注册时无钱包地址
 
         return result;
     }
@@ -184,5 +186,78 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         // authStatus、status、walletAddress 不允许用户更新，忽略这些字段
 
         userMapper.update(updateUser);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void realnameAuth(String realName, String idNumber) {
+        User currentUser = UserUtil.get();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+            
+        // 检查是否已经实名认证
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(USER_REALNAME.USER_ID.eq(currentUser.getId()));
+        UserRealname existingAuth = userRealnameMapper.selectOneByQuery(queryWrapper);
+            
+        if (existingAuth != null) {
+            if (existingAuth.getVerifyStatus() == VerifyStatusEnum.PASSED) {
+                throw new RuntimeException("用户已通过实名认证");
+            } else if (existingAuth.getVerifyStatus() == VerifyStatusEnum.PENDING) {
+                throw new RuntimeException("实名认证已在审核中");
+            }
+        }
+            
+        // 创建或更新实名认证记录
+        UserRealname userRealname = (existingAuth != null) ? existingAuth : new UserRealname();
+        userRealname.setUserId(currentUser.getId());
+        userRealname.setRealName(realName);
+        userRealname.setIdNumber(idNumber);
+        userRealname.setVerifyStatus(VerifyStatusEnum.PENDING);
+            
+        if (existingAuth != null) {
+            userRealnameMapper.update(userRealname);
+        } else {
+            userRealnameMapper.insert(userRealname);
+        }
+            
+        // TODO: 调用第三方实名认证接口
+        // 模拟认证通过，直接更新状态为通过
+        userRealname.setVerifyStatus(VerifyStatusEnum.PASSED);
+        userRealname.setVerifyTime(LocalDateTime.now());
+        userRealnameMapper.update(userRealname);
+            
+        // 检查用户是否已有钱包，如果没有则创建
+        QueryWrapper walletQuery = QueryWrapper.create()
+                .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
+        UserWallet existingWallet = userWalletMapper.selectOneByQuery(walletQuery);
+            
+        if (existingWallet == null) {
+            // 生成钱包地址（简化版，实际应该使用真实的区块链钱包生成）
+            String uuid = IdUtil.simpleUUID();
+            String walletAddress = "0x" + uuid.substring(0, Math.min(40, uuid.length()));
+            UserWallet userWallet = new UserWallet();
+            userWallet.setUserId(currentUser.getId());
+            userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
+            userWallet.setWalletAddress(walletAddress);
+            userWalletMapper.insert(userWallet);
+        }
+            
+        // 更新用户认证状态
+        User updateUser = new User();
+        updateUser.setId(currentUser.getId());
+        updateUser.setAuthStatus(UserAuthEnum.AUTH);
+        userMapper.update(updateUser);
+    }
+
+    public UserRealname getRealnameAuth() {
+        User currentUser = UserUtil.get();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(USER_REALNAME.USER_ID.eq(currentUser.getId()));
+        return userRealnameMapper.selectOneByQuery(queryWrapper);
     }
 }

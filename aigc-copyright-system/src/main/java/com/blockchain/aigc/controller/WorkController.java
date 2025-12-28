@@ -3,15 +3,22 @@ package com.blockchain.aigc.controller;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.UploadWorkRequest;
 import com.blockchain.aigc.dto.WorkDTO;
+import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.enums.UserAuthEnum;
+import com.blockchain.aigc.service.UserService;
 import com.blockchain.aigc.service.WorkService;
+import com.blockchain.aigc.utils.UserUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+
+import static com.blockchain.aigc.entity.table.UserTableDef.USER;
 
 @RestController
 @RequestMapping("/api/works")
@@ -20,6 +27,9 @@ public class WorkController {
     
     @Autowired
     private WorkService workService;
+    
+    @Autowired
+    private UserService userService;
     
     /**
      * 上传作品
@@ -35,6 +45,16 @@ public class WorkController {
             @RequestParam(value = "prompt", required = false) String prompt,
             @RequestParam(value = "creationType", required = false) String creationType) {
         try {
+            // 检查用户认证状态
+            User currentUser = UserUtil.get();
+            if (currentUser == null) {
+                return ApiResponse.error("用户未登录");
+            }
+            
+            if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
+                return ApiResponse.error("用户未通过实名认证，无法上传作品");
+            }
+            
             UploadWorkRequest request = new UploadWorkRequest();
             request.setFileName(file.getOriginalFilename());
             request.setSummary(summary);
@@ -99,6 +119,16 @@ public class WorkController {
     @PostMapping("/{id}/certify")
     public ApiResponse<String> certifyWork(@PathVariable Long id) {
         try {
+            // 检查用户认证状态
+            User currentUser = UserUtil.get();
+            if (currentUser == null) {
+                return ApiResponse.error("用户未登录");
+            }
+            
+            if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
+                return ApiResponse.error("用户未通过实名认证，无法确权作品");
+            }
+            
             WorkDTO workDTO = workService.getWorkById(id);
             workService.certifyWork(workDTO.getWorkId());
             return ApiResponse.success("确权成功", null);

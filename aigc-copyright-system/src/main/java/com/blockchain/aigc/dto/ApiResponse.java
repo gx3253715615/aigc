@@ -1,5 +1,6 @@
 package com.blockchain.aigc.dto;
 
+import com.blockchain.aigc.enums.ResultEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -8,11 +9,11 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 public class ApiResponse<T> implements Serializable {
-    
+
     private Integer code;
     private String message;
     private T data;
-    
+
     public static <T> ApiResponse<T> success(T data) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setCode(200);
@@ -20,7 +21,7 @@ public class ApiResponse<T> implements Serializable {
         response.setData(data);
         return response;
     }
-    
+
     public static <T> ApiResponse<T> success(String message, T data) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setCode(200);
@@ -28,18 +29,25 @@ public class ApiResponse<T> implements Serializable {
         response.setData(data);
         return response;
     }
-    
+
     public static <T> ApiResponse<T> error(String message) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setCode(500);
         response.setMessage(message);
         return response;
     }
-    
+
     public static <T> ApiResponse<T> error(Integer code, String message) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setCode(code);
         response.setMessage(message);
+        return response;
+    }
+
+    public static <T> ApiResponse<T> error(ResultEnum resultEnum) {
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(resultEnum.getCode());
+        response.setMessage(resultEnum.getMsg());
         return response;
     }
 }

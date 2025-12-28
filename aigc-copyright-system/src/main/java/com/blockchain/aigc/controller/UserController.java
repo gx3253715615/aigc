@@ -2,8 +2,10 @@ package com.blockchain.aigc.controller;
 
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.LoginRequest;
+import com.blockchain.aigc.dto.RealnameAuthRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
 import com.blockchain.aigc.dto.UserProfileDTO;
+import com.blockchain.aigc.entity.UserRealname;
 import com.blockchain.aigc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -67,6 +69,32 @@ public class UserController {
         try {
             userService.updateProfile(request);
             return ApiResponse.success("更新成功", null);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 实名认证
+     */
+    @PostMapping("/realname-auth")
+    public ApiResponse<String> realnameAuth(@RequestBody RealnameAuthRequest request) {
+        try {
+            userService.realnameAuth(request.getRealName(), request.getIdNumber());
+            return ApiResponse.success("实名认证申请已提交，请等待审核", null);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取实名认证信息
+     */
+    @GetMapping("/realname-auth")
+    public ApiResponse<UserRealname> getRealnameAuth() {
+        try {
+            UserRealname auth = userService.getRealnameAuth();
+            return ApiResponse.success(auth);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }

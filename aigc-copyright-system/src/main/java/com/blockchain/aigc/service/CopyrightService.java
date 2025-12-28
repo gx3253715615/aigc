@@ -51,7 +51,12 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         if (fromUser == null) {
             throw new RuntimeException("用户未登录");
         }
-
+            
+        // 检查用户认证状态
+        if (fromUser.getAuthStatus() != UserAuthEnum.AUTH) {
+            throw new RuntimeException("用户未通过实名认证，无法进行版权转让");
+        }
+            
         User toUser = userService.getUserById(request.getToUserId());
         if (toUser == null) {
             throw new RuntimeException("受让方用户不存在");

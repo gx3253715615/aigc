@@ -3,7 +3,10 @@ package com.blockchain.aigc.controller;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.CopyrightTransferRequest;
 import com.blockchain.aigc.dto.TransferHistoryDTO;
+import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.service.CopyrightService;
+import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +28,16 @@ public class CopyrightController {
     public ApiResponse<TransferHistoryDTO> transferCopyright(
             @Valid @RequestBody CopyrightTransferRequest request) {
         try {
+            // 检查用户认证状态
+            User currentUser = UserUtil.get();
+            if (currentUser == null) {
+                return ApiResponse.error("用户未登录");
+            }
+            
+            if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
+                return ApiResponse.error("用户未通过实名认证，无法进行版权转让");
+            }
+            
             TransferHistoryDTO result = copyrightService.transferCopyright(request);
             return ApiResponse.success("转让成功", result);
         } catch (Exception e) {

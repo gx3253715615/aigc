@@ -6,6 +6,6 @@ package com.blockchain.aigc.enums;
  **/
 public enum VerifyStatusEnum {
     PENDING,
-    APPROVED,
+    PASSED,
     REJECTED
 }

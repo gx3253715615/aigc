@@ -8,6 +8,7 @@ import com.blockchain.aigc.entity.Work;
 import com.blockchain.aigc.enums.FileTypeEnum;
 import com.blockchain.aigc.enums.LicenseTypeEnum;
 import com.blockchain.aigc.enums.RightTypeEnum;
+import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.enums.WorkStatusEnum;
 import com.blockchain.aigc.mapper.WorkMapper;
 import com.blockchain.aigc.utils.FileHashUtil;
@@ -48,6 +49,11 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
             throw new RuntimeException("用户未登录");
+        }
+        
+        // 检查用户认证状态
+        if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
+            throw new RuntimeException("用户未通过实名认证，无法上传作品");
         }
 
         try {
@@ -250,21 +256,26 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         if (currentUser == null) {
             throw new RuntimeException("用户未登录");
         }
-
+            
+        // 检查用户认证状态
+        if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
+            throw new RuntimeException("用户未通过实名认证，无法确权作品");
+        }
+            
         Work work = getWorkEntityByWorkId(workId);
         if (work == null) {
             throw new RuntimeException("作品不存在");
         }
-
+            
         // 修改确权逻辑
         //if (!work.getUserId().equals(currentUser.getId())) {
         //    throw new RuntimeException("无权确权该作品");
         //}
-
+            
         if (work.getWorkStatus() == WorkStatusEnum.CERTIFIED) {
             throw new RuntimeException("作品已确权");
         }
-
+            
         // TODO: Call blockchain service to certify
         updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, null, null);
     }
