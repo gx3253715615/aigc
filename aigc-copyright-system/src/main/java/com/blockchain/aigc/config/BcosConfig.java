@@ -10,8 +10,8 @@ public class BcosConfig {
 
     @Bean
     public Client client() {
-        //BcosSDK sdk = BcosSDK.build("aigc-copyright-system/src/main/resources/config.toml");
-        BcosSDK sdk = BcosSDK.build("src/main/resources/config.toml");
+        BcosSDK sdk = BcosSDK.build("aigc-copyright-system/src/main/resources/config.toml");
+        //BcosSDK sdk = BcosSDK.build("src/main/resources/config.toml");
         //BcosSDK sdk = BcosSDK.build("classpath:config.toml");
         return sdk.getClient(1); // groupId
     }
