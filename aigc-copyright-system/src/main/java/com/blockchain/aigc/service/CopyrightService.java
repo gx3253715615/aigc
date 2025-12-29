@@ -51,12 +51,12 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         if (fromUser == null) {
             throw new RuntimeException("用户未登录");
         }
-            
+
         // 检查用户认证状态
         if (fromUser.getAuthStatus() != UserAuthEnum.AUTH) {
             throw new RuntimeException("用户未通过实名认证，无法进行版权转让");
         }
-            
+
         User toUser = userService.getUserById(request.getToUserId());
         if (toUser == null) {
             throw new RuntimeException("受让方用户不存在");
@@ -90,7 +90,8 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
 
         // 创建转让记录
         CopyrightTransfer transfer = new CopyrightTransfer();
-        transfer.setTransferId(IdUtil.getSnowflakeNextIdStr());
+        String transId = IdUtil.getSnowflakeNextIdStr();
+        transfer.setTransferId(transId);
         transfer.setWorkId(work.getWorkId());
         transfer.setFromUserId(fromUser.getId());
         transfer.setToUserId(toUser.getId());
@@ -121,19 +122,19 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         // 调用区块链服务进行链上转让
         try {
             String txHash = blockchainService.transferCopyright(
+                    transId,
                     work.getWorkId(),
                     work.getFileHash(),
                     fromWallet.getWalletAddress(),
                     toWallet.getWalletAddress(),
-                    request.getTransferType()
-            );
+                    request.getTransferType());
 
             transfer.setChainTxHash(txHash);
             transfer.setChainStatus(ChainStatusEnum.SUCCESS);
             transfer.setTransferStatus(TransferStatusEnum.CONFIRMED);
             copyrightTransferMapper.update(transfer);
 
-            // 更新作品状态
+            // 更新work状态
             if (request.getTransferType() == TransferTypeEnum.FULL_TRANSFER) {
                 workService.updateWorkStatus(work.getWorkId(), WorkStatusEnum.TRANSFERRED, txHash, null);
             }

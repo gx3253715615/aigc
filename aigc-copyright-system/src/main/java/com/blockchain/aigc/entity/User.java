@@ -5,6 +5,7 @@ import com.blockchain.aigc.enums.UserStatusEnum;
 import com.blockchain.aigc.handler.listener.MyInsertListener;
 import com.blockchain.aigc.handler.listener.MyUpdateListener;
 import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.RelationOneToOne;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 import lombok.experimental.Accessors;

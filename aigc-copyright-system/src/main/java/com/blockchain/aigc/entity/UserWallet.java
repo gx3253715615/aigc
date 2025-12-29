@@ -23,5 +23,8 @@ public class UserWallet extends Base {
 
     @Column(value = "wallet_address")
     private String walletAddress;
+
+    @Column(value = "private_key")
+    private String privateKey;
 }
 

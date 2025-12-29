@@ -4,18 +4,22 @@ import cn.hutool.core.util.IdUtil;
 import com.blockchain.aigc.dto.UploadWorkRequest;
 import com.blockchain.aigc.dto.WorkDTO;
 import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.entity.UserWallet;
 import com.blockchain.aigc.entity.Work;
 import com.blockchain.aigc.enums.FileTypeEnum;
 import com.blockchain.aigc.enums.LicenseTypeEnum;
 import com.blockchain.aigc.enums.RightTypeEnum;
 import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.enums.WorkStatusEnum;
+import com.blockchain.aigc.mapper.UserMapper;
+import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.mapper.WorkMapper;
 import com.blockchain.aigc.utils.FileHashUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,10 +29,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.blockchain.aigc.entity.table.UserTableDef.USER;
+import static com.blockchain.aigc.entity.table.UserWalletTableDef.USER_WALLET;
 import static com.blockchain.aigc.entity.table.WorkTableDef.WORK;
 
+@Slf4j
 @Service
 public class WorkService extends ServiceImpl<WorkMapper, Work> {
 
@@ -44,13 +52,20 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
     @Value("${minio.bucket-name}")
     private String bucketName;
 
+    @Autowired
+    private BlockchainService blockchainService;
+
+    @Autowired
+    private UserWalletMapper userWalletMapper;
+
+
     @Transactional(rollbackFor = Exception.class)
     public WorkDTO uploadWork(MultipartFile file, UploadWorkRequest request) {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
             throw new RuntimeException("用户未登录");
         }
-        
+
         // 检查用户认证状态
         if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
             throw new RuntimeException("用户未通过实名认证，无法上传作品");
@@ -213,6 +228,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         }
 
         workMapper.update(work);
+        log.info("作品状态更新成功: " + workId + " -> " + status);
     }
 
     private FileTypeEnum determineFileType(String fileName) {
@@ -256,27 +272,31 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         if (currentUser == null) {
             throw new RuntimeException("用户未登录");
         }
-            
+
         // 检查用户认证状态
         if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
             throw new RuntimeException("用户未通过实名认证，无法确权作品");
         }
-            
+
         Work work = getWorkEntityByWorkId(workId);
         if (work == null) {
             throw new RuntimeException("作品不存在");
         }
-            
+
         // 修改确权逻辑
         //if (!work.getUserId().equals(currentUser.getId())) {
         //    throw new RuntimeException("无权确权该作品");
         //}
-            
+
         if (work.getWorkStatus() == WorkStatusEnum.CERTIFIED) {
             throw new RuntimeException("作品已确权");
         }
-            
-        // TODO: Call blockchain service to certify
-        updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, null, null);
+
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
+        UserWallet wallet = userWalletMapper.selectOneByQuery(queryWrapper);
+
+        Map<String, String> map = blockchainService.confirmCopyright(wallet.getPrivateKey(), workId, work.getFileHash());
+        updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, map.get("txHash"), Long.parseLong(map.get("blockNumber")));
     }
 }

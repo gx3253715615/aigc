@@ -16,7 +16,9 @@ class ContractServiceTest extends BaseTest {
 
     @Test
     public void deploy() throws Exception {
-        String address = contractService.deployAddressAction();
+        //String address = contractService.deployAddressAction();
+        //String address = contractService.deployCopyrightCert();
+        String address = contractService.deployCopyrightTransferCert();
         System.out.println("合约地址：" + address);
     }
 

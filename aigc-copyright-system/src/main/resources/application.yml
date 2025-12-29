@@ -55,5 +55,8 @@ logging:
     org.springframework.security: debug
 
 
+# 合约地址
 contract:
   address-action: 0xfa6ac41d0e064cfb50321de940cd7a7907b2dede
+  copyright-cert: 0xc6360c8743da3a720b8e92490ca795de989a55ab
+  copyright-transfer: 0xa5d55e5f14bee905809cf1e4d189a17770bc589e

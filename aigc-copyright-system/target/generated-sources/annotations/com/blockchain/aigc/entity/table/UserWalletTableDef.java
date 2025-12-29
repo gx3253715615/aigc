@@ -27,6 +27,8 @@ public class UserWalletTableDef extends TableDef {
      */
     public final QueryColumn CREATE_TIME = new QueryColumn(this, "create_time");
 
+    public final QueryColumn PRIVATE_KEY = new QueryColumn(this, "private_key");
+
     /**
      * 更新时间
      */
@@ -52,7 +54,7 @@ public class UserWalletTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, CHAIN_TYPE, CREATE_TIME, UPDATE_TIME, CREATE_USER_ID, UPDATE_USER_ID, WALLET_ADDRESS};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, CHAIN_TYPE, CREATE_TIME, PRIVATE_KEY, UPDATE_TIME, CREATE_USER_ID, UPDATE_USER_ID, WALLET_ADDRESS};
 
     public UserWalletTableDef() {
         super("", "user_wallets");

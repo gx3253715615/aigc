@@ -1,1 +1,4 @@
-bash contract2java.sh solidity -s contracts/solidity/AddressAction.sol -p com.blockchain.aigc
+bash contract2java.sh solidity -s contracts/solidity/CopyrightCert.sol -p com.blockchain.aigc
+
+
+bash sol2java.sh -p com.blockchain.aigc

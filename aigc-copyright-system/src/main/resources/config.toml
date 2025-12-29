@@ -18,7 +18,8 @@ certPath = "conf"                           # The certification path
 # default load the GM SSL encryption privateKey from ${certPath}/gm/gmensdk.key
 
 [network]
-peers = ["127.0.0.1:20200", "127.0.0.1:20201", "127.0.0.1:20202", "127.0.0.1:20203"]    # The peer list to connect
+#peers = ["127.0.0.1:20200", "127.0.0.1:20201", "127.0.0.1:20202", "127.0.0.1:20203"]    # The peer list to connect
+peers = ["127.0.0.1:20200", "127.0.0.1:20201"]
 
 # Configure a private topic as a topic message sender.
 # [[amop]]
@@ -50,6 +51,3 @@ accountFileFormat = "pem"       # The storage format of account file (Default is
 # Default is the number of cpu cores
 
 maxBlockingQueueSize = "102400"             # The max blocking queue size of the thread pool
-
-[cert]
-enable = false

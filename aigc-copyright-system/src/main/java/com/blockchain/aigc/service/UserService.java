@@ -241,14 +241,16 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         UserWallet existingWallet = userWalletMapper.selectOneByQuery(walletQuery);
 
         CryptoKeyPair cryptoKeyPair = null;
+        UserWallet userWallet = null;
         if (existingWallet == null) {
             // 创建钱包地址
             cryptoKeyPair = blockchainService.createCryptoKeyPair();
             String walletAddress = cryptoKeyPair.getAddress();
-            UserWallet userWallet = new UserWallet();
+            userWallet = new UserWallet();
             userWallet.setUserId(currentUser.getId());
             userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
             userWallet.setWalletAddress(walletAddress);
+            userWallet.setPrivateKey(cryptoKeyPair.getHexPrivateKey());
             userWalletMapper.insert(userWallet);
         }
 
@@ -259,7 +261,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         userMapper.update(updateUser);
 
         try {
-            blockchainService.doAction("0xfa6ac41d0e064cfb50321de940cd7a7907b2dede", cryptoKeyPair);
+            if (userWallet != null) {
+                blockchainService.doAction(userWallet.getPrivateKey());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
