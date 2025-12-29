@@ -1,48 +1,7 @@
 <template>
-  <div class="dashboard-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>AIGC Copyright</h2>
-      </div>
-      
-      <el-menu
-        :default-active="activeMenu"
-        class="sidebar-menu"
-        @select="handleMenuSelect"
-      >
-        <el-menu-item index="/dashboard">
-          <el-icon><HomeFilled /></el-icon>
-          <span>Dashboard</span>
-        </el-menu-item>
-        <el-menu-item index="/works">
-          <el-icon><Document /></el-icon>
-          <span>My Works</span>
-        </el-menu-item>
-        <el-menu-item index="/upload">
-          <el-icon><Upload /></el-icon>
-          <span>Upload Work</span>
-        </el-menu-item>
-        <el-menu-item index="/transfers">
-          <el-icon><Swap /></el-icon>
-          <span>Transfers</span>
-        </el-menu-item>
-        <el-menu-item index="/blockchain">
-          <el-icon><Link /></el-icon>
-          <span>Blockchain</span>
-        </el-menu-item>
-      </el-menu>
-
-      <div class="sidebar-footer">
-        <el-button type="danger" plain @click="handleLogout">
-          <el-icon><SwitchButton /></el-icon>
-          Logout
-        </el-button>
-      </div>
-    </aside>
-
+  <DefaultLayout>
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="dashboard-content">
       <!-- Header -->
       <header class="header">
         <div class="header-left">
@@ -98,7 +57,7 @@
           <el-col :xs="24" :sm="12" :md="6">
             <div class="stat-card">
               <div class="stat-icon" style="background: #fef0f0; color: #f56c6c;">
-                <el-icon size="32"><Swap /></el-icon>
+                <el-icon size="32"><Refresh /></el-icon>
               </div>
               <div class="stat-info">
                 <h3>{{ stats.totalTransfers }}</h3>
@@ -149,7 +108,7 @@
     
     <!-- Realname Auth Dialog -->
     <RealnameAuthDialog v-model="showRealnameAuthDialog" @success="handleRealnameAuthSuccess" />
-  </div>
+  </DefaultLayout>
 </template>
 
 <script setup lang="ts">
@@ -157,9 +116,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { getMyWorks } from '@/api/works'
 import type { Work } from '@/types/work'
 import RealnameAuthDialog from '@/components/RealnameAuthDialog.vue'
+import { User, Document, CircleCheck, Refresh, Wallet } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -182,10 +143,6 @@ const shortAddress = computed(() => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 })
 
-const handleMenuSelect = (index: string) => {
-  router.push(index)
-}
-
 const handleCommand = (command: string) => {
   if (command === 'logout') {
     handleLogout()
@@ -196,11 +153,6 @@ const handleCommand = (command: string) => {
   } else if (command === 'realnameAuth') {
     showRealnameAuthDialog.value = true
   }
-}
-
-const handleRealnameAuthSuccess = () => {
-  // Refresh user status after successful realname auth
-  userStore.checkLoginStatus()
 }
 
 const handleLogout = () => {
@@ -214,7 +166,8 @@ const goToWorks = () => {
 }
 
 const viewWork = (id: number) => {
-  router.push(`/works/${id}`)
+  console.log('View work clicked with id:', id);
+  router.push(`/works/${id}`);
 }
 
 const getStatusType = (status: string) => {
@@ -230,14 +183,16 @@ const getStatusType = (status: string) => {
 const loadDashboardData = async () => {
   loading.value = true
   try {
-    const response = await getMyWorks(1, 5)
+    // Load recent works
+    const response = await getMyWorks(1, 5) // Get first 5 works
     recentWorks.value = response.data.records
+    
+    // Calculate stats
     stats.value.totalWorks = response.data.totalRow
-    stats.value.certifiedWorks = response.data.records.filter(
-      (work: Work) => work.workStatus === 'CERTIFIED'
-    ).length
-  } catch (error: any) {
-    ElMessage.error('Failed to load dashboard data')
+    stats.value.certifiedWorks = response.data.records.filter(work => work.workStatus === 'CERTIFIED').length
+    // Note: Total transfers would require a separate API call
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error)
   } finally {
     loading.value = false
   }

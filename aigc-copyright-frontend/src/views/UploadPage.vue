@@ -1,109 +1,93 @@
 <template>
-  <div class="dashboard-layout">
-    <aside class="sidebar">
-      <div class="sidebar-header"><h2>AIGC Copyright</h2></div>
-      <el-menu :default-active="activeMenu" class="sidebar-menu" @select="handleMenuSelect">
-        <el-menu-item index="/dashboard"><el-icon><HomeFilled /></el-icon><span>Dashboard</span></el-menu-item>
-        <el-menu-item index="/works"><el-icon><Document /></el-icon><span>My Works</span></el-menu-item>
-        <el-menu-item index="/upload"><el-icon><Upload /></el-icon><span>Upload Work</span></el-menu-item>
-        <el-menu-item index="/transfers"><el-icon><Swap /></el-icon><span>Transfers</span></el-menu-item>
-        <el-menu-item index="/blockchain"><el-icon><Link /></el-icon><span>Blockchain</span></el-menu-item>
-      </el-menu>
-      <div class="sidebar-footer">
-        <el-button type="danger" plain @click="handleLogout"><el-icon><SwitchButton /></el-icon>Logout</el-button>
-      </div>
-    </aside>
+  <DefaultLayout>
+    <header class="header"><h1>Upload Work</h1></header>
 
-    <div class="main-content">
-      <header class="header"><h1>Upload Work</h1></header>
-
-      <!-- Warning message for unauthenticated users -->
-      <div v-if="userStore.user?.authStatus === 'INIT'" class="warning-message">
-        <el-alert
-          title="注意：您尚未通过实名认证，无法上传作品"
-          type="warning"
-          show-icon
-          :closable="false"
-        />
-      </div>
-
-      <div class="upload-content">
-        <el-card class="upload-card">
-          <el-upload
-            ref="uploadRef"
-            class="upload-area"
-            drag
-            :auto-upload="false"
-            :limit="1"
-            :on-change="handleFileChange"
-            :on-exceed="handleExceed"
-            :disabled="userStore.user?.authStatus !== 'AUTH'"
-          >
-            <el-icon class="upload-icon"><UploadFilled /></el-icon>
-            <div class="upload-text">Drop file here or <em>click to upload</em></div>
-            <template #tip>
-              <div class="upload-tip">Support for text, image, audio, video files (max 100MB)</div>
-            </template>
-          </el-upload>
-
-          <el-form
-            v-if="fileSelected"
-            ref="formRef"
-            :model="uploadForm"
-            label-width="140px"
-            class="upload-form"
-          >
-            <el-divider />
-            <el-form-item label="File Name">
-              <el-input v-model="uploadForm.fileName" disabled />
-            </el-form-item>
-            <el-form-item label="Summary">
-              <el-input v-model="uploadForm.summary" type="textarea" :rows="3" placeholder="Brief description of the work" />
-            </el-form-item>
-            <el-form-item label="AI Model Name">
-              <el-input v-model="uploadForm.modelName" placeholder="e.g., GPT-4, DALL-E, etc." />
-            </el-form-item>
-            <el-form-item label="Model Version">
-              <el-input v-model="uploadForm.modelVersion" placeholder="e.g., v1.0" />
-            </el-form-item>
-            <el-form-item label="Model Source">
-              <el-input v-model="uploadForm.modelSource" placeholder="e.g., OpenAI, Midjourney, etc." />
-            </el-form-item>
-            
-            <el-form-item label="Model Parameters">
-              <div class="model-params-container">
-                <div v-for="(value, key, index) in uploadForm.modelParams" :key="index" class="param-row">
-                  <el-input v-model="uploadForm.modelParams[key].name" @blur="updateParamKey(key, uploadForm.modelParams[key].name)" placeholder="Parameter name" style="width: 40%" />
-                  <el-input v-model="uploadForm.modelParams[key].value" placeholder="Value" style="width: 45%; margin-left: 8px" />
-                  <el-button type="danger" :icon="Delete" circle @click="removeParam(key)" style="margin-left: 8px" />
-                </div>
-                <el-button type="primary" plain :icon="Plus" @click="addParam" style="margin-top: 8px">Add Parameter</el-button>
-              </div>
-            </el-form-item>
-            
-            <el-form-item label="Prompt">
-              <el-input v-model="uploadForm.prompt" type="textarea" :rows="4" placeholder="The prompt used to generate this work" />
-            </el-form-item>
-            <el-form-item label="Creation Type">
-              <el-select v-model="uploadForm.creationType" placeholder="Select creation type">
-                <el-option label="AI Generated" value="AI_GENERATED" />
-                <el-option label="Human-AI Collaboration" value="HUMAN_AI_COLLAB" />
-                <el-option label="AI Assisted" value="AI_ASSISTED" />
-              </el-select>
-            </el-form-item>
-            
-            <el-form-item>
-              <el-button type="primary" size="large" :loading="uploading" @click="handleUpload">
-                <el-icon><Upload /></el-icon>
-                Upload Work
-              </el-button>
-              <el-button size="large" @click="handleReset">Reset</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </div>
+    <!-- Warning message for unauthenticated users -->
+    <div v-if="userStore.user?.authStatus === 'INIT'" class="warning-message">
+      <el-alert
+        title="注意：您尚未通过实名认证，无法上传作品"
+        type="warning"
+        show-icon
+        :closable="false"
+      />
     </div>
-  </div>
+
+    <div class="upload-content">
+      <el-card class="upload-card">
+        <el-upload
+          ref="uploadRef"
+          class="upload-area"
+          drag
+          :auto-upload="false"
+          :limit="1"
+          :on-change="handleFileChange"
+          :on-exceed="handleExceed"
+          :disabled="userStore.user?.authStatus !== 'AUTH'"
+        >
+          <el-icon class="upload-icon"><UploadFilled /></el-icon>
+          <div class="upload-text">Drop file here or <em>click to upload</em></div>
+          <template #tip>
+            <div class="upload-tip">Support for text, image, audio, video files (max 100MB)</div>
+          </template>
+        </el-upload>
+
+        <el-form
+          v-if="fileSelected"
+          ref="formRef"
+          :model="uploadForm"
+          label-width="140px"
+          class="upload-form"
+        >
+          <el-divider />
+          <el-form-item label="File Name">
+            <el-input v-model="uploadForm.fileName" disabled />
+          </el-form-item>
+          <el-form-item label="Summary">
+            <el-input v-model="uploadForm.summary" type="textarea" :rows="3" placeholder="Brief description of the work" />
+          </el-form-item>
+          <el-form-item label="AI Model Name">
+            <el-input v-model="uploadForm.modelName" placeholder="e.g., GPT-4, DALL-E, etc." />
+          </el-form-item>
+          <el-form-item label="Model Version">
+            <el-input v-model="uploadForm.modelVersion" placeholder="e.g., v1.0" />
+          </el-form-item>
+          <el-form-item label="Model Source">
+            <el-input v-model="uploadForm.modelSource" placeholder="e.g., OpenAI, Midjourney, etc." />
+          </el-form-item>
+          
+          <el-form-item label="Model Parameters">
+            <div class="model-params-container">
+              <div v-for="(value, key, index) in uploadForm.modelParams" :key="index" class="param-row">
+                <el-input v-model="uploadForm.modelParams[key].name" @blur="updateParamKey(key, uploadForm.modelParams[key].name)" placeholder="Parameter name" style="width: 40%" />
+                <el-input v-model="uploadForm.modelParams[key].value" placeholder="Value" style="width: 45%; margin-left: 8px" />
+                <el-button type="danger" :icon="Delete" circle @click="removeParam(key)" style="margin-left: 8px" />
+              </div>
+              <el-button type="primary" plain :icon="Plus" @click="addParam" style="margin-top: 8px">Add Parameter</el-button>
+            </div>
+          </el-form-item>
+          
+          <el-form-item label="Prompt">
+            <el-input v-model="uploadForm.prompt" type="textarea" :rows="4" placeholder="The prompt used to generate this work" />
+          </el-form-item>
+          <el-form-item label="Creation Type">
+            <el-select v-model="uploadForm.creationType" placeholder="Select creation type">
+              <el-option label="AI Generated" value="AI_GENERATED" />
+              <el-option label="Human-AI Collaboration" value="HUMAN_AI_COLLAB" />
+              <el-option label="AI Assisted" value="AI_ASSISTED" />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item>
+            <el-button type="primary" size="large" :loading="uploading" @click="handleUpload">
+              <el-icon><Upload /></el-icon>
+              Upload Work
+            </el-button>
+            <el-button size="large" @click="handleReset">Reset</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </div>
+  </DefaultLayout>
 </template>
 
 <script setup lang="ts">
@@ -112,6 +96,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { uploadWork } from '@/api/works'
 
 const router = useRouter()
@@ -135,13 +120,6 @@ const uploadForm = ref({
   prompt: '',
   creationType: ''
 })
-
-const handleMenuSelect = (index: string) => router.push(index)
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
-  ElMessage.success('Logout successful')
-}
 
 const handleFileChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
   if (uploadFile.raw) {
@@ -240,7 +218,142 @@ const handleReset = () => {
 </script>
 
 <style scoped>
-@import './DashboardPage.vue';
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.sidebar {
+  width: 240px;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.sidebar-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.sidebar-menu {
+  flex: 1;
+  border: none;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.sidebar-footer .el-button {
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  background: white;
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.user-avatar:hover {
+  background: #f5f7fa;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-info h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 4px 0;
+}
+
+.stat-info p {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.section-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
 .upload-content {
   padding: 32px;
 }
