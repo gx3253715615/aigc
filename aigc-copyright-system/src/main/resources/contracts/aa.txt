@@ -2,3 +2,10 @@ bash contract2java.sh solidity -s contracts/solidity/CopyrightCert.sol -p com.bl
 
 
 bash sol2java.sh -p com.blockchain.aigc
+
+
+bash contract2java.sh solidity -s contracts/solidity/Asset.sol -p org.fisco.bcos.asset.contract
+
+bash contract2java.sh solidity -s contracts/code/AddressAction.sol -p com.blockchain.aigc
+bash contract2java.sh solidity -s contracts/code/CopyrightCert.sol -p com.blockchain.aigc
+bash contract2java.sh solidity -s contracts/code/CopyrightTransfer.sol -p com.blockchain.aigc

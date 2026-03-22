@@ -23,6 +23,7 @@ public class Work extends Base {
     @Column(value = "work_id")
     private String workId;
 
+    // 持有人
     @Column(value = "user_id")
     private Long userId;
 

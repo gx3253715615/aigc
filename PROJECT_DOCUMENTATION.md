@@ -242,7 +242,6 @@ TODO
 - Java 8+
 - Node.js 16+
 - MySQL 8.0
-- Redis 6.0+
 - MinIO
 - FISCO BCOS节点
 

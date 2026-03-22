@@ -1,19 +1,23 @@
 <template>
   <DefaultLayout>
-    <header class="header"><h1>Upload Work</h1></header>
+    <template #header-left>
+      <div class="page-title">
+        <div class="title">上传作品</div>
+        <div class="subtitle">支持图片、音频、视频与文本等格式</div>
+      </div>
+    </template>
 
-    <!-- Warning message for unauthenticated users -->
-    <div v-if="userStore.user?.authStatus === 'INIT'" class="warning-message">
-      <el-alert
-        title="注意：您尚未通过实名认证，无法上传作品"
-        type="warning"
-        show-icon
-        :closable="false"
-      />
-    </div>
+    <div class="upload-page">
+      <div v-if="userStore.user?.authStatus === 'INIT'" class="warning-message">
+        <el-alert
+          title="注意：您尚未通过实名认证，无法上传作品"
+          type="warning"
+          show-icon
+          :closable="false"
+        />
+      </div>
 
-    <div class="upload-content">
-      <el-card class="upload-card">
+      <el-card class="upload-card panel" shadow="never">
         <el-upload
           ref="uploadRef"
           class="upload-area"
@@ -25,9 +29,9 @@
           :disabled="userStore.user?.authStatus !== 'AUTH'"
         >
           <el-icon class="upload-icon"><UploadFilled /></el-icon>
-          <div class="upload-text">Drop file here or <em>click to upload</em></div>
+          <div class="upload-text">将文件拖到此处，或<em>点击上传</em></div>
           <template #tip>
-            <div class="upload-tip">Support for text, image, audio, video files (max 100MB)</div>
+            <div class="upload-tip">支持文本、图片、音频、视频等文件格式（最大 100MB）</div>
           </template>
         </el-upload>
 
@@ -39,50 +43,55 @@
           class="upload-form"
         >
           <el-divider />
-          <el-form-item label="File Name">
+          <el-form-item label="文件名">
             <el-input v-model="uploadForm.fileName" disabled />
           </el-form-item>
-          <el-form-item label="Summary">
-            <el-input v-model="uploadForm.summary" type="textarea" :rows="3" placeholder="Brief description of the work" />
+          <el-form-item label="作品摘要">
+            <el-input v-model="uploadForm.summary" type="textarea" :rows="3" placeholder="请简要描述您的作品" />
           </el-form-item>
-          <el-form-item label="AI Model Name">
-            <el-input v-model="uploadForm.modelName" placeholder="e.g., GPT-4, DALL-E, etc." />
+          <el-form-item label="AI 模型名称">
+            <el-input v-model="uploadForm.modelName" placeholder="例如：GPT-4、DALL-E 等" />
           </el-form-item>
-          <el-form-item label="Model Version">
-            <el-input v-model="uploadForm.modelVersion" placeholder="e.g., v1.0" />
+          <el-form-item label="模型版本">
+            <el-input v-model="uploadForm.modelVersion" placeholder="例如：v1.0" />
           </el-form-item>
-          <el-form-item label="Model Source">
-            <el-input v-model="uploadForm.modelSource" placeholder="e.g., OpenAI, Midjourney, etc." />
+          <el-form-item label="模型来源">
+            <el-input v-model="uploadForm.modelSource" placeholder="例如：OpenAI、Midjourney 等" />
           </el-form-item>
           
-          <el-form-item label="Model Parameters">
+          <el-form-item label="模型参数">
             <div class="model-params-container">
-              <div v-for="(value, key, index) in uploadForm.modelParams" :key="index" class="param-row">
-                <el-input v-model="uploadForm.modelParams[key].name" @blur="updateParamKey(key, uploadForm.modelParams[key].name)" placeholder="Parameter name" style="width: 40%" />
-                <el-input v-model="uploadForm.modelParams[key].value" placeholder="Value" style="width: 45%; margin-left: 8px" />
-                <el-button type="danger" :icon="Delete" circle @click="removeParam(key)" style="margin-left: 8px" />
+              <div v-for="(_value, key, index) in uploadForm.modelParams" :key="index" class="param-row">
+                <el-input
+                  v-model="uploadForm.modelParams[key].name"
+                  class="param-key"
+                  placeholder="参数名"
+                  @blur="updateParamKey(key, uploadForm.modelParams[key].name)"
+                />
+                <el-input v-model="uploadForm.modelParams[key].value" class="param-value" placeholder="参数值" />
+                <el-button type="danger" :icon="Delete" circle @click="removeParam(key)" />
               </div>
-              <el-button type="primary" plain :icon="Plus" @click="addParam" style="margin-top: 8px">Add Parameter</el-button>
+              <el-button type="primary" plain :icon="Plus" @click="addParam" class="add-param">添加参数</el-button>
             </div>
           </el-form-item>
           
-          <el-form-item label="Prompt">
-            <el-input v-model="uploadForm.prompt" type="textarea" :rows="4" placeholder="The prompt used to generate this work" />
+          <el-form-item label="生成提示词">
+            <el-input v-model="uploadForm.prompt" type="textarea" :rows="4" placeholder="请输入生成此作品使用的提示词" />
           </el-form-item>
-          <el-form-item label="Creation Type">
-            <el-select v-model="uploadForm.creationType" placeholder="Select creation type">
-              <el-option label="AI Generated" value="AI_GENERATED" />
-              <el-option label="Human-AI Collaboration" value="HUMAN_AI_COLLAB" />
-              <el-option label="AI Assisted" value="AI_ASSISTED" />
+          <el-form-item label="创作类型">
+            <el-select v-model="uploadForm.creationType" placeholder="请选择创作类型">
+              <el-option label="AI 生成" value="AI_GENERATED" />
+              <el-option label="人机协作" value="HUMAN_AI_COLLAB" />
+              <el-option label="AI 辅助" value="AI_ASSISTED" />
             </el-select>
           </el-form-item>
           
           <el-form-item>
             <el-button type="primary" size="large" :loading="uploading" @click="handleUpload">
               <el-icon><Upload /></el-icon>
-              Upload Work
+              上传作品
             </el-button>
-            <el-button size="large" @click="handleReset">Reset</el-button>
+            <el-button size="large" @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -91,8 +100,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -100,10 +109,8 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { uploadWork } from '@/api/works'
 
 const router = useRouter()
-const route = useRoute()
 const userStore = useUserStore()
 
-const activeMenu = computed(() => route.path)
 const uploadRef = ref<UploadInstance>()
 const formRef = ref()
 const uploading = ref(false)
@@ -121,7 +128,7 @@ const uploadForm = ref({
   creationType: ''
 })
 
-const handleFileChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
+const handleFileChange: UploadProps['onChange'] = (uploadFile) => {
   if (uploadFile.raw) {
     selectedFile.value = uploadFile.raw
     uploadForm.value.fileName = uploadFile.name
@@ -154,7 +161,7 @@ const updateParamKey = (oldKey: string, newName: string) => {
 
 const handleUpload = async () => {
   if (!selectedFile.value) {
-    ElMessage.warning('Please select a file')
+    ElMessage.warning('请选择文件')
     return
   }
 
@@ -190,11 +197,11 @@ const handleUpload = async () => {
     formData.append('creationType', uploadForm.value.creationType)
 
     await uploadWork(formData)
-    ElMessage.success('Work uploaded successfully!')
+    ElMessage.success('作品上传成功!')
     handleReset()
     router.push('/works')
   } catch (error: any) {
-    ElMessage.error('Upload failed: ' + error.message)
+    ElMessage.error('上传失败：' + error.message)
   } finally {
     uploading.value = false
   }
@@ -218,149 +225,40 @@ const handleReset = () => {
 </script>
 
 <style scoped>
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.sidebar {
-  width: 240px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+.page-title {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
+.page-title .title {
+  font-size: 18px;
+  font-weight: 750;
+  color: rgba(15, 23, 42, 0.92);
 }
 
-.sidebar-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
+.page-title .subtitle {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
 }
 
-.sidebar-menu {
-  flex: 1;
-  border: none;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e4e7ed;
-}
-
-.sidebar-footer .el-button {
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
+.upload-page {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 14px;
 }
 
-.header {
-  background: white;
-  padding: 0 32px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.panel {
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
 }
 
-.header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-
-.user-avatar:hover {
-  background: #f5f7fa;
-}
-
-.dashboard-content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-info h3 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
-}
-
-.stat-info p {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 0;
-}
-
-.section-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.upload-content {
-  padding: 32px;
-}
 .upload-card {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
 }
+
 .upload-area {
   width: 100%;
 }
@@ -392,14 +290,29 @@ const handleReset = () => {
 .param-row {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.param-key {
+  flex: 2;
+}
+
+.param-value {
+  flex: 2.5;
+}
+
+.add-param {
+  margin-top: 8px;
 }
 .warning-message {
-  max-width: 900px;
-  margin: 0 auto 20px;
-  padding: 0 32px;
+  max-width: 980px;
+  margin: 0 auto;
+  width: 100%;
 }
 :deep(.el-upload-dragger) {
   padding: 60px 20px;
+  border-radius: 14px;
+  border-color: rgba(2, 6, 23, 0.1);
 }
 </style>

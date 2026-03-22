@@ -1,73 +1,68 @@
 <template>
   <DefaultLayout>
-    <header class="header"><h1>Blockchain Query</h1></header>
+    <template #header-left>
+      <div class="page-title">
+        <div class="title">区块链查询</div>
+        <div class="subtitle">查询证书并验证文件哈希</div>
+      </div>
+    </template>
 
-    <div class="content-area">
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-card header="Query Certificate">
+    <el-row :gutter="16" class="grid">
+      <el-col :xs="24" :md="12">
+        <el-card header="查询版权证书" class="panel" shadow="never">
             <el-form @submit.prevent="queryCertificate">
-              <el-form-item label="Work ID">
-                <el-input v-model="certWorkId" placeholder="Enter work ID" />
+              <el-form-item label="作品 ID">
+                <el-input v-model="certWorkId" placeholder="请输入作品 ID" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="queryCertificate" :loading="certLoading">Query</el-button>
+                <el-button type="primary" @click="queryCertificate" :loading="certLoading">查询</el-button>
               </el-form-item>
             </el-form>
             <div v-if="certInfo" class="result-box">
-              <el-descriptions title="Certificate Info" :column="1" border>
-                <el-descriptions-item label="Work ID">{{ certInfo.workId }}</el-descriptions-item>
-                <el-descriptions-item label="Exists">
+              <el-descriptions title="证书信息" :column="1" border>
+                <el-descriptions-item label="作品 ID">{{ certInfo.workId }}</el-descriptions-item>
+                <el-descriptions-item label="是否存在">
                   <el-tag :type="certInfo.exists ? 'success' : 'danger'">
-                    {{ certInfo.exists ? 'Yes' : 'No' }}
+                    {{ certInfo.exists ? '是' : '否' }}
                   </el-tag>
                 </el-descriptions-item>
               </el-descriptions>
             </div>
-          </el-card>
-        </el-col>
+        </el-card>
+      </el-col>
 
-        <el-col :span="12">
-          <el-card header="Verify Copyright">
+      <el-col :xs="24" :md="12">
+        <el-card header="验证版权" class="panel" shadow="never">
             <el-form @submit.prevent="verifyCopyright">
-              <el-form-item label="Work ID">
-                <el-input v-model="verifyWorkId" placeholder="Enter work ID" />
+              <el-form-item label="作品 ID">
+                <el-input v-model="verifyWorkId" placeholder="请输入作品 ID" />
               </el-form-item>
-              <el-form-item label="File Hash">
-                <el-input v-model="verifyHash" placeholder="Enter file hash" />
+              <el-form-item label="文件哈希">
+                <el-input v-model="verifyHash" placeholder="请输入文件哈希" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="verifyCopyright" :loading="verifyLoading">Verify</el-button>
+                <el-button type="primary" @click="verifyCopyright" :loading="verifyLoading">验证</el-button>
               </el-form-item>
             </el-form>
             <div v-if="verifyResult !== null" class="result-box">
               <el-result
                 :icon="verifyResult ? 'success' : 'error'"
-                :title="verifyResult ? 'Verified' : 'Not Verified'"
-                :sub-title="verifyResult ? 'Copyright is valid on blockchain' : 'Copyright not found or invalid'"
+                :title="verifyResult ? '验证成功' : '验证失败'"
+                :sub-title="verifyResult ? '该版权已在区块链上存证' : '未找到版权记录或版权无效'"
               />
             </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </DefaultLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { getCertificate, verifyCopyright as verifyApi } from '@/api/blockchain'
 import type { CertificateInfo } from '@/api/blockchain'
-
-const router = useRouter()
-const route = useRoute()
-const userStore = useUserStore()
-
-const activeMenu = computed(() => route.path)
 
 const certWorkId = ref('')
 const certLoading = ref(false)
@@ -80,7 +75,7 @@ const verifyResult = ref<boolean | null>(null)
 
 const queryCertificate = async () => {
   if (!certWorkId.value) {
-    ElMessage.warning('Please enter work ID')
+    ElMessage.warning('请输入作品 ID')
     return
   }
   certLoading.value = true
@@ -88,7 +83,7 @@ const queryCertificate = async () => {
     const response = await getCertificate(certWorkId.value)
     certInfo.value = response.data
   } catch (error: any) {
-    ElMessage.error('Query failed: ' + error.message)
+    ElMessage.error('查询失败：' + error.message)
   } finally {
     certLoading.value = false
   }
@@ -96,7 +91,7 @@ const queryCertificate = async () => {
 
 const verifyCopyright = async () => {
   if (!verifyWorkId.value || !verifyHash.value) {
-    ElMessage.warning('Please enter all fields')
+    ElMessage.warning('请填写完整信息')
     return
   }
   verifyLoading.value = true
@@ -104,7 +99,7 @@ const verifyCopyright = async () => {
     const response = await verifyApi(verifyWorkId.value, verifyHash.value)
     verifyResult.value = response.data
   } catch (error: any) {
-    ElMessage.error('Verification failed: ' + error.message)
+    ElMessage.error('验证失败：' + error.message)
   } finally {
     verifyLoading.value = false
   }
@@ -112,145 +107,33 @@ const verifyCopyright = async () => {
 </script>
 
 <style scoped>
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.sidebar {
-  width: 240px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+.page-title {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
+.page-title .title {
+  font-size: 18px;
+  font-weight: 750;
+  color: rgba(15, 23, 42, 0.92);
 }
 
-.sidebar-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
+.page-title .subtitle {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
 }
 
-.sidebar-menu {
-  flex: 1;
-  border: none;
+.grid {
+  margin-top: 2px;
 }
 
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e4e7ed;
+.panel {
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
 }
 
-.sidebar-footer .el-button {
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.header {
-  background: white;
-  padding: 0 32px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-
-.user-avatar:hover {
-  background: #f5f7fa;
-}
-
-.dashboard-content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-info h3 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
-}
-
-.stat-info p {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 0;
-}
-
-.section-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.content-area {
-  padding: 32px;
-}
 .result-box {
   margin-top: 24px;
 }

@@ -1,6 +1,6 @@
 package com.blockchain.aigc.service;
 
-import cn.hutool.core.util.IdUtil;
+import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
 import com.blockchain.aigc.dto.UserProfileDTO;
@@ -17,9 +17,9 @@ import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.utils.JwtUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.query.QueryWrapper;
-import com.mybatisflex.core.service.IService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import org.fisco.bcos.sdk.crypto.keypair.CryptoKeyPair;
+import org.fisco.bcos.sdk.v3.crypto.CryptoSuite;
+import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,10 +51,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private BlockchainService blockchainService;
+    private BaseClient baseClient;
 
-    @Value("${contract.address-action}")
-    private String contractAddress;
+
 
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> register(RegisterRequest request) {
@@ -240,33 +239,20 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                 .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
         UserWallet existingWallet = userWalletMapper.selectOneByQuery(walletQuery);
 
-        CryptoKeyPair cryptoKeyPair = null;
-        UserWallet userWallet = null;
-        if (existingWallet == null) {
-            // 创建钱包地址
-            cryptoKeyPair = blockchainService.createCryptoKeyPair();
-            String walletAddress = cryptoKeyPair.getAddress();
-            userWallet = new UserWallet();
-            userWallet.setUserId(currentUser.getId());
-            userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
-            userWallet.setWalletAddress(walletAddress);
-            userWallet.setPrivateKey(cryptoKeyPair.getHexPrivateKey());
-            userWalletMapper.insert(userWallet);
-        }
+        // 创建钱包地址
+        CryptoKeyPair cryptoKeyPair = baseClient.generateKeyPair();
+        UserWallet userWallet = new UserWallet();
+        userWallet.setUserId(currentUser.getId());
+        userWallet.setChainType(ChainTypeEnum.FISCO_BCOS);
+        userWallet.setWalletAddress(cryptoKeyPair.getAddress());
+        userWallet.setPrivateKey(cryptoKeyPair.getHexPrivateKey());
+        userWalletMapper.insert(userWallet);
 
         // 更新用户认证状态
         User updateUser = new User();
         updateUser.setId(currentUser.getId());
         updateUser.setAuthStatus(UserAuthEnum.AUTH);
         userMapper.update(updateUser);
-
-        try {
-            if (userWallet != null) {
-                blockchainService.doAction(userWallet.getPrivateKey());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public UserRealname getRealnameAuth() {

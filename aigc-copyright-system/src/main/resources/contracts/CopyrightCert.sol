@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity >=0.6.10 <0.8.20;
 
 /**
  * @title CopyrightCert
@@ -24,7 +24,7 @@ contract CopyrightCert {
      */
     function registerWork(
         uint256 workId,
-        string fileHash,
+        string memory fileHash,
         address author
     ) public {
 
@@ -51,7 +51,7 @@ contract CopyrightCert {
         require(w.certifyTime == 0, "already confirmed");
 
         // 使用区块时间作为确权时间
-        w.certifyTime = now;
+        w.certifyTime = block.timestamp;
     }
 
     /**
@@ -61,12 +61,12 @@ contract CopyrightCert {
     public
     view
     returns (
-        string fileHash,
+        string memory fileHash,
         address authorAddress,
         uint256 certifyTime
     )
     {
-        Work memory w = works[workId];
+        Work storage w = works[workId];
         require(w.exists, "work not exists");
 
         return (

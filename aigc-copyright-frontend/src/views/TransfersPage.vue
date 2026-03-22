@@ -1,59 +1,57 @@
 <template>
   <DefaultLayout>
-    <header class="header"><h1>Transfer History</h1></header>
+    <template #header-left>
+      <div class="page-title">
+        <div class="title">转让记录</div>
+        <div class="subtitle">查询作品的链上流转与状态</div>
+      </div>
+    </template>
 
-    <div class="content-area">
-      <el-card>
-        <el-form inline>
-          <el-form-item label="Work ID">
-            <el-input v-model="searchWorkId" placeholder="Enter work ID" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="loadTransfers">Search</el-button>
-          </el-form-item>
-        </el-form>
+    <el-card class="panel" shadow="never">
+      <el-form inline class="search">
+        <el-form-item label="作品 ID">
+          <el-input v-model="searchWorkId" placeholder="请输入作品 ID" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadTransfers">查询</el-button>
+        </el-form-item>
+      </el-form>
 
-        <el-table :data="transfers" v-loading="loading" style="width: 100%; margin-top: 20px;">
-          <el-table-column prop="transferId" label="Transfer ID" min-width="150" />
-          <el-table-column prop="fromUserName" label="From User" width="120" />
-          <el-table-column prop="toUserName" label="To User" width="120" />
-          <el-table-column prop="transferType" label="Type" width="140" />
-          <el-table-column label="Status" width="120">
-            <template #default="{ row }">
-              <el-tag :type="getStatusType(row.chainStatus)">{{ row.chainStatus }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createTime" label="Transfer Time" width="180" />
-        </el-table>
+      <el-table :data="transfers" v-loading="loading" style="width: 100%">
+        <el-table-column prop="transferId" label="转让 ID" min-width="150" />
+        <el-table-column prop="fromUserName" label="转出用户" width="120" />
+        <el-table-column prop="toUserName" label="转入用户" width="120" />
+        <el-table-column prop="transferType" label="转让类型" width="140" />
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.chainStatus)">{{ row.chainStatus }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="转让时间" width="180" />
+      </el-table>
 
-        <div class="pagination">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :total="total"
-            layout="total, prev, pager, next"
-            @current-change="loadTransfers"
-          />
-        </div>
-      </el-card>
-    </div>
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next"
+          @current-change="loadTransfers"
+        />
+      </div>
+    </el-card>
   </DefaultLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { getTransferHistory } from '@/api/transfers'
 import type { CopyrightTransfer } from '@/types/work'
 
-const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
-
-const activeMenu = computed(() => route.path)
 const loading = ref(false)
 const searchWorkId = ref('')
 const transfers = ref<CopyrightTransfer[]>([])
@@ -67,7 +65,7 @@ const getStatusType = (status: string) => {
 
 const loadTransfers = async () => {
   if (!searchWorkId.value) {
-    ElMessage.warning('Please enter a work ID')
+    ElMessage.warning('请输入作品 ID')
     return
   }
   loading.value = true
@@ -76,153 +74,49 @@ const loadTransfers = async () => {
     transfers.value = response.data.records
     total.value = response.data.totalRow
   } catch (error: any) {
-    ElMessage.error('Failed to load transfers')
+    ElMessage.error('加载转让记录失败')
   } finally {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  const workId = route.query.workId
+  if (typeof workId === 'string' && workId) {
+    searchWorkId.value = workId
+    loadTransfers()
+  }
+})
 </script>
 
 <style scoped>
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.sidebar {
-  width: 240px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+.page-title {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
+.page-title .title {
+  font-size: 18px;
+  font-weight: 750;
+  color: rgba(15, 23, 42, 0.92);
 }
 
-.sidebar-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
+.page-title .subtitle {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
 }
 
-.sidebar-menu {
-  flex: 1;
-  border: none;
+.panel {
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
 }
 
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e4e7ed;
+.search {
+  margin-bottom: 16px;
 }
 
-.sidebar-footer .el-button {
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.header {
-  background: white;
-  padding: 0 32px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-
-.user-avatar:hover {
-  background: #f5f7fa;
-}
-
-.dashboard-content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-info h3 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
-}
-
-.stat-info p {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 0;
-}
-
-.section-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.content-area {
-  padding: 32px;
-}
 .pagination {
   margin-top: 20px;
   display: flex;

@@ -19,7 +19,9 @@ certPath = "conf"                           # The certification path
 
 [network]
 #peers = ["127.0.0.1:20200", "127.0.0.1:20201", "127.0.0.1:20202", "127.0.0.1:20203"]    # The peer list to connect
-peers = ["127.0.0.1:20200", "127.0.0.1:20201"]
+peers = ["192.168.133.136:20200", "192.168.133.136:20201"]
+
+defaultGroup="group0"
 
 # Configure a private topic as a topic message sender.
 # [[amop]]

@@ -1,6 +1,7 @@
 package com.blockchain.aigc.service;
 
 import cn.hutool.core.util.IdUtil;
+import com.blockchain.aigc.client.CopyrightTransferClient;
 import com.blockchain.aigc.dto.CopyrightTransferRequest;
 import com.blockchain.aigc.dto.TransferHistoryDTO;
 import com.blockchain.aigc.entity.CopyrightTransfer;
@@ -10,10 +11,10 @@ import com.blockchain.aigc.entity.Work;
 import com.blockchain.aigc.enums.*;
 import com.blockchain.aigc.mapper.CopyrightTransferMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
+import com.blockchain.aigc.mapper.WorkMapper;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
-import com.mybatisflex.core.service.IService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static com.blockchain.aigc.entity.table.CopyrightTransferTableDef.COPYRIGHT_TRANSFER;
 import static com.blockchain.aigc.entity.table.UserWalletTableDef.USER_WALLET;
+import static com.blockchain.aigc.entity.table.WorkTableDef.WORK;
 
 @Service
 public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, CopyrightTransfer> {
@@ -40,10 +42,14 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
     private WorkService workService;
 
     @Autowired
+    private WorkMapper workMapper;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
-    private BlockchainService blockchainService;
+    private CopyrightTransferClient copyrightTransferClient;
+
 
     @Transactional(rollbackFor = Exception.class)
     public TransferHistoryDTO transferCopyright(CopyrightTransferRequest request) {
@@ -119,13 +125,12 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
 
         copyrightTransferMapper.insert(transfer);
 
-        // 调用区块链服务进行链上转让
         try {
-            String txHash = blockchainService.transferCopyright(
+            // 调用区块链服务进行链上转让
+            String txHash = copyrightTransferClient.createTransfer(
                     transId,
                     work.getWorkId(),
                     work.getFileHash(),
-                    fromWallet.getWalletAddress(),
                     toWallet.getWalletAddress(),
                     request.getTransferType());
 
@@ -136,6 +141,8 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
 
             // 更新work状态
             if (request.getTransferType() == TransferTypeEnum.FULL_TRANSFER) {
+                work.setUserId(toUser.getId());
+                workMapper.update(work);
                 workService.updateWorkStatus(work.getWorkId(), WorkStatusEnum.TRANSFERRED, txHash, null);
             }
         } catch (Exception e) {

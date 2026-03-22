@@ -1,6 +1,8 @@
 package com.blockchain.aigc.service;
 
 import cn.hutool.core.util.IdUtil;
+import com.blockchain.aigc.client.BaseClient;
+import com.blockchain.aigc.client.CopyrightCertClient;
 import com.blockchain.aigc.dto.UploadWorkRequest;
 import com.blockchain.aigc.dto.WorkDTO;
 import com.blockchain.aigc.entity.User;
@@ -53,11 +55,10 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
     private String bucketName;
 
     @Autowired
-    private BlockchainService blockchainService;
-
-    @Autowired
     private UserWalletMapper userWalletMapper;
 
+    @Autowired
+    private CopyrightCertClient copyrightCertClient;
 
     @Transactional(rollbackFor = Exception.class)
     public WorkDTO uploadWork(MultipartFile file, UploadWorkRequest request) {
@@ -70,6 +71,12 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
             throw new RuntimeException("用户未通过实名认证，无法上传作品");
         }
+
+        // 获取钱包信息
+        QueryWrapper queryWrapper1 = QueryWrapper.create()
+                .select(USER_WALLET.WALLET_ADDRESS)
+                .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
+        String walletAddress = userWalletMapper.selectOneByQuery(queryWrapper1).getWalletAddress();
 
         try {
             // 生成文件hash
@@ -121,7 +128,10 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
 
             workMapper.insert(work);
 
-            // 转换为DTO
+            // 注册到区块链
+            copyrightCertClient.registerWork(workId, fileHash, walletAddress);
+
+            // 返回
             WorkDTO dto = new WorkDTO();
             BeanUtils.copyProperties(work, dto);
             dto.setUserName(currentUser.getUsername());
@@ -283,20 +293,35 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             throw new RuntimeException("作品不存在");
         }
 
-        // 修改确权逻辑
-        //if (!work.getUserId().equals(currentUser.getId())) {
-        //    throw new RuntimeException("无权确权该作品");
-        //}
-
         if (work.getWorkStatus() == WorkStatusEnum.CERTIFIED) {
             throw new RuntimeException("作品已确权");
         }
 
-        QueryWrapper queryWrapper = QueryWrapper.create()
-                .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
-        UserWallet wallet = userWalletMapper.selectOneByQuery(queryWrapper);
+        if (work.getWorkStatus() != WorkStatusEnum.UPLOADED) {
+            throw new RuntimeException("作品未上传完成，无法确权");
+        }
 
-        Map<String, String> map = blockchainService.confirmCopyright(wallet.getPrivateKey(), workId, work.getFileHash());
-        updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, map.get("txHash"), Long.parseLong(map.get("blockNumber")));
+        // 确权作品
+        copyrightCertClient.confirmCopyright(workId);
+
+        //QueryWrapper queryWrapper = QueryWrapper.create()
+        //        .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
+        //UserWallet wallet = userWalletMapper.selectOneByQuery(queryWrapper);
+        //
+        //Map<String, String> map = blockchainService.confirmCopyright(wallet.getPrivateKey(), workId, work.getFileHash());
+        //updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, map.get("txHash"), Long.parseLong(map.get("blockNumber")));
+    }
+
+    // 查询链上作品信息
+    public Map<String, Object> getWork(String workId) {
+        User currentUser = UserUtil.get();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        Work work = getWorkEntityByWorkId(workId);
+        if (work == null) {
+            throw new RuntimeException("作品不存在");
+        }
+        return copyrightCertClient.getWork(workId);
     }
 }

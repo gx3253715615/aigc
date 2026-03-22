@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity >=0.6.10 <0.8.20;
 
 /**
  * @title CopyrightTransfer
@@ -39,7 +39,7 @@ contract CopyrightTransfer {
     function createTransfer(
         uint256 transferId,
         uint256 workId,
-        string fileHash,
+        string memory fileHash,
         address to,
         TransferType transferType
     ) public {
@@ -60,7 +60,7 @@ contract CopyrightTransfer {
             from: from,
             to: to,
             transferType: transferType,
-            timestamp: now
+            timestamp: block.timestamp
         });
 
         workTransfers[workId].push(transferId);
@@ -74,14 +74,14 @@ contract CopyrightTransfer {
     view
     returns (
         uint256 workId,
-        string fileHash,
+        string memory fileHash,
         address from,
         address to,
         TransferType transferType,
         uint256 timestamp
     )
     {
-        Transfer memory t = transfers[transferId];
+        Transfer storage t = transfers[transferId];
         require(t.timestamp != 0, "transfer not exists");
 
         return (
@@ -100,7 +100,7 @@ contract CopyrightTransfer {
     function getWorkTransfers(uint256 workId)
     public
     view
-    returns (uint256[])
+    returns (uint256[] memory)
     {
         return workTransfers[workId];
     }
@@ -114,12 +114,13 @@ contract CopyrightTransfer {
     returns (address)
     {
         uint256[] memory ids = workTransfers[workId];
+
         if (ids.length == 0) {
             return address(0);
         }
 
         for (uint256 i = ids.length; i > 0; i--) {
-            Transfer memory t = transfers[ids[i - 1]];
+            Transfer storage t = transfers[ids[i - 1]];
             if (t.transferType == TransferType.FULL_TRANSFER) {
                 return t.to;
             }
@@ -137,11 +138,12 @@ contract CopyrightTransfer {
     returns (RightType)
     {
         uint256[] memory ids = workTransfers[workId];
+
         if (ids.length == 0) {
             return RightType.RIGHT_OWNERSHIP;
         }
 
-        Transfer memory t = transfers[ids[ids.length - 1]];
+        Transfer storage t = transfers[ids[ids.length - 1]];
 
         if (t.transferType == TransferType.LICENSE_GRANT) {
             return RightType.RIGHT_USAGE;

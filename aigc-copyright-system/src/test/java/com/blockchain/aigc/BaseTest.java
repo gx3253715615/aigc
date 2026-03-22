@@ -1,9 +1,12 @@
 package com.blockchain.aigc;
 
-import org.fisco.bcos.sdk.client.Client;
+import com.blockchain.aigc.client.BaseClient;
+import com.blockchain.aigc.client.CopyrightCertClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Map;
 
 /**
  * @author gaoxinyu
@@ -14,11 +17,18 @@ public class BaseTest {
 
     // 测试连接
     @Autowired
-    private Client client;
+    private BaseClient baseClient;
 
-    //@Test
+    @Autowired
+    private CopyrightCertClient copyrightCertClient;
+
+    @Test
     public void testClient() {
-        // 获取最新高度
-        System.out.println(client.getBlockNumber().getBlockNumber());
+        copyrightCertClient.registerWork("123456", "654321", "0x123456");
+        System.out.println("注册成功");
+        copyrightCertClient.confirmCopyright("123456");
+        System.out.println("确权成功");
+        Map<String, Object> work = copyrightCertClient.getWork("123456");
+        System.out.println("111");
     }
 }

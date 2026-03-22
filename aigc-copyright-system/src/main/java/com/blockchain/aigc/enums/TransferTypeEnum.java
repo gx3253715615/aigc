@@ -17,4 +17,13 @@ public enum TransferTypeEnum {
     public int getNum() {
         return num;
     }
+
+    public static TransferTypeEnum getTransferType(int num) {
+        for (TransferTypeEnum transferType : TransferTypeEnum.values()) {
+            if (transferType.num == num) {
+                return transferType;
+            }
+        }
+        return null;
+    }
 }

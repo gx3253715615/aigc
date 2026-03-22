@@ -1,11 +1,26 @@
-import axios from 'axios'
+import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+
+export type ApiResult<T> = {
+  data: T
+  message?: string
+}
+
+type RequestInstance = AxiosInstance & {
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  head<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  options<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResult<T>>
+}
 
 const request = axios.create({
   baseURL: '/api',
   timeout: 10000
-})
+}) as AxiosInstance
 
 // 请求拦截器
 request.interceptors.request.use(
@@ -22,17 +37,16 @@ request.interceptors.request.use(
 )
 
 // 响应拦截器
-request.interceptors.response.use(
-  (response) => {
-    const { code, message, data } = response.data
+;(request.interceptors.response as any).use(
+  (response: AxiosResponse<any>) => {
+    const { code, message, data } = response.data || {}
     if (code === 200) {
-      return { data, message }
-    } else {
-      ElMessage.error(message || '请求失败')
-      return Promise.reject(new Error(message || '请求失败'))
+      return { data, message } as ApiResult<any>
     }
+    ElMessage.error(message || '请求失败')
+    return Promise.reject(new Error(message || '请求失败'))
   },
-  (error) => {
+  (error: any) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('userId')
@@ -47,4 +61,4 @@ request.interceptors.response.use(
   }
 )
 
-export default request
+export default request as RequestInstance

@@ -1,135 +1,113 @@
 <template>
   <DefaultLayout>
-    <!-- Main Content -->
-    <div class="dashboard-content">
-      <!-- Header -->
-      <header class="header">
-        <div class="header-left">
-          <h1>Dashboard</h1>
-        </div>
-        <div class="header-right">
-          <el-dropdown @command="handleCommand">
-            <div class="user-avatar">
-              <el-icon><User /></el-icon>
-              <span>{{ userStore.user?.username || 'User' }}</span>
-              <el-tag v-if="userStore.user?.authStatus === 'INIT'" type="warning" size="small" style="margin-left: 8px;">未认证</el-tag>
-              <el-tag v-else-if="userStore.user?.authStatus === 'AUTH'" type="success" size="small" style="margin-left: 8px;">已认证</el-tag>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">Profile</el-dropdown-item>
-                <el-dropdown-item command="wallet">Wallet</el-dropdown-item>
-                <el-dropdown-item v-if="userStore.user?.authStatus === 'INIT'" command="realnameAuth" divided>Auth</el-dropdown-item>
-                <el-dropdown-item v-else-if="userStore.user?.authStatus === 'AUTH'" command="realnameAuth" divided disabled>Authenticated</el-dropdown-item>
-                <el-dropdown-item divided command="logout">Logout</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </header>
-
-      <!-- Dashboard Content -->
-      <div class="dashboard-content">
-        <!-- Stats Cards -->
-        <el-row :gutter="20">
-          <el-col :xs="24" :sm="12" :md="6">
-            <div class="stat-card">
-              <div class="stat-icon" style="background: #ecf5ff; color: #409eff;">
-                <el-icon size="32"><Document /></el-icon>
-              </div>
-              <div class="stat-info">
-                <h3>{{ stats.totalWorks }}</h3>
-                <p>Total Works</p>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
-            <div class="stat-card">
-              <div class="stat-icon" style="background: #f0f9ff; color: #67c23a;">
-                <el-icon size="32"><CircleCheck /></el-icon>
-              </div>
-              <div class="stat-info">
-                <h3>{{ stats.certifiedWorks }}</h3>
-                <p>Certified Works</p>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
-            <div class="stat-card">
-              <div class="stat-icon" style="background: #fef0f0; color: #f56c6c;">
-                <el-icon size="32"><Refresh /></el-icon>
-              </div>
-              <div class="stat-info">
-                <h3>{{ stats.totalTransfers }}</h3>
-                <p>Transfers</p>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
-            <div class="stat-card">
-              <div class="stat-icon" style="background: #f4f4f5; color: #909399;">
-                <el-icon size="32"><Wallet /></el-icon>
-              </div>
-              <div class="stat-info">
-                <h3 style="font-size: 14px;">{{ shortAddress }}</h3>
-                <p>Wallet</p>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-
-        <!-- Recent Works -->
-        <div class="section-card">
-          <div class="section-header">
-            <h2>Recent Works</h2>
-            <el-button type="primary" @click="goToWorks">View All</el-button>
-          </div>
-          
-          <el-table :data="recentWorks" v-loading="loading" style="width: 100%">
-            <el-table-column prop="fileName" label="File Name" />
-            <el-table-column prop="fileType" label="Type" width="100" />
-            <el-table-column prop="workStatus" label="Status" width="120">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.workStatus)">
-                  {{ row.workStatus }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="Upload Time" width="180" />
-            <el-table-column label="Actions" width="150">
-              <template #default="{ row }">
-                <el-button size="small" @click="viewWork(row.id)">View</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
+    <template #header-left>
+      <div class="page-title">
+        <div class="title">工作台</div>
+        <div class="subtitle">概览你的作品确权与流转情况</div>
       </div>
+    </template>
+    <template #header-actions>
+      <el-button type="primary" @click="goToUpload">上传作品</el-button>
+    </template>
+
+    <div class="dashboard">
+      <el-row :gutter="16">
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-card class="stat-card" shadow="never">
+            <div class="stat">
+              <div class="stat-icon primary">
+                <el-icon :size="20"><Document /></el-icon>
+              </div>
+              <div class="stat-main">
+                <div class="stat-value">{{ stats.totalWorks }}</div>
+                <div class="stat-label">作品总数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-card class="stat-card" shadow="never">
+            <div class="stat">
+              <div class="stat-icon success">
+                <el-icon :size="20"><CircleCheck /></el-icon>
+              </div>
+              <div class="stat-main">
+                <div class="stat-value">{{ stats.certifiedWorks }}</div>
+                <div class="stat-label">已确权作品</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-card class="stat-card" shadow="never">
+            <div class="stat">
+              <div class="stat-icon warning">
+                <el-icon :size="20"><Refresh /></el-icon>
+              </div>
+              <div class="stat-main">
+                <div class="stat-value">{{ stats.totalTransfers }}</div>
+                <div class="stat-label">转让次数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-card class="stat-card" shadow="never">
+            <div class="stat">
+              <div class="stat-icon neutral">
+                <el-icon :size="20"><Wallet /></el-icon>
+              </div>
+              <div class="stat-main">
+                <div class="stat-value mono">{{ shortAddress }}</div>
+                <div class="stat-label">钱包地址</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <el-card class="section-card" shadow="never">
+        <template #header>
+          <div class="section-header">
+            <div class="section-title">
+              <div class="h">最近作品</div>
+              <div class="d">最近上传的 5 条记录</div>
+            </div>
+            <el-button type="primary" plain @click="goToWorks">查看全部</el-button>
+          </div>
+        </template>
+
+        <el-table :data="recentWorks" v-loading="loading" style="width: 100%">
+          <el-table-column prop="fileName" label="文件名" min-width="200" />
+          <el-table-column prop="fileType" label="类型" width="110" />
+          <el-table-column prop="workStatus" label="状态" width="130">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.workStatus)">{{ row.workStatus }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="上传时间" width="180" />
+          <el-table-column label="操作" width="140" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" @click="viewWork(row.id)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
     </div>
-    
-    <!-- Realname Auth Dialog -->
-    <RealnameAuthDialog v-model="showRealnameAuthDialog" @success="handleRealnameAuthSuccess" />
   </DefaultLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { getMyWorks } from '@/api/works'
 import type { Work } from '@/types/work'
-import RealnameAuthDialog from '@/components/RealnameAuthDialog.vue'
-import { User, Document, CircleCheck, Refresh, Wallet } from '@element-plus/icons-vue'
+import { Document, CircleCheck, Refresh, Wallet } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const route = useRoute()
-const userStore = useUserStore()
-
-const activeMenu = computed(() => route.path)
 const loading = ref(false)
 const recentWorks = ref<Work[]>([])
-const showRealnameAuthDialog = ref(false)
 
 const stats = ref({
   totalWorks: 0,
@@ -143,31 +121,16 @@ const shortAddress = computed(() => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 })
 
-const handleCommand = (command: string) => {
-  if (command === 'logout') {
-    handleLogout()
-  } else if (command === 'profile') {
-    ElMessage.info('Profile page coming soon')
-  } else if (command === 'wallet') {
-    ElMessage.info('Wallet page coming soon')
-  } else if (command === 'realnameAuth') {
-    showRealnameAuthDialog.value = true
-  }
-}
-
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
-  ElMessage.success('Logout successful')
-}
-
 const goToWorks = () => {
   router.push('/works')
 }
 
+const goToUpload = () => {
+  router.push('/upload')
+}
+
 const viewWork = (id: number) => {
-  console.log('View work clicked with id:', id);
-  router.push(`/works/${id}`);
+  router.push(`/works/${id}`)
 }
 
 const getStatusType = (status: string) => {
@@ -204,139 +167,122 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.sidebar {
-  width: 240px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+.page-title {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
+.page-title .title {
+  font-size: 18px;
+  font-weight: 750;
+  color: rgba(15, 23, 42, 0.92);
 }
 
-.sidebar-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
+.page-title .subtitle {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
 }
 
-.sidebar-menu {
-  flex: 1;
-  border: none;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e4e7ed;
-}
-
-.sidebar-footer .el-button {
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
+.dashboard {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-.header {
-  background: white;
-  padding: 0 32px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-
-.user-avatar:hover {
-  background: #f5f7fa;
-}
-
-.dashboard-content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
+  gap: 16px;
 }
 
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.stat {
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
+  gap: 14px;
 }
 
 .stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(2, 6, 23, 0.06);
 }
 
-.stat-info h3 {
-  font-size: 28px;
+.stat-icon.primary {
+  background: rgba(79, 70, 229, 0.12);
+  color: rgba(79, 70, 229, 1);
+}
+
+.stat-icon.success {
+  background: rgba(34, 197, 94, 0.12);
+  color: rgba(34, 197, 94, 1);
+}
+
+.stat-icon.warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: rgba(245, 158, 11, 1);
+}
+
+.stat-icon.neutral {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.8);
+}
+
+.stat-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 780;
+  color: rgba(15, 23, 42, 0.92);
+}
+
+.stat-value.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
   font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
 }
 
-.stat-info p {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 0;
+.stat-label {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .section-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
 }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.section-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
+.section-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title .h {
+  font-size: 14px;
+  font-weight: 750;
+  color: rgba(15, 23, 42, 0.9);
+}
+
+.section-title .d {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.58);
 }
 </style>
