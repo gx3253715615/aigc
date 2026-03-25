@@ -1,6 +1,7 @@
 package com.blockchain.aigc.dto;
 
 import com.blockchain.aigc.enums.FileTypeEnum;
+import com.blockchain.aigc.enums.AuditStatusEnum;
 import com.blockchain.aigc.enums.LicenseTypeEnum;
 import com.blockchain.aigc.enums.RightTypeEnum;
 import com.blockchain.aigc.enums.WorkStatusEnum;
@@ -27,6 +28,7 @@ public class WorkDTO {
     private String prompt;
     private String creationType;
     private WorkStatusEnum workStatus;
+    private AuditStatusEnum status;
     private RightTypeEnum rightType;
     private LicenseTypeEnum licenseType;
     private String chainTxHash;

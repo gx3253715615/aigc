@@ -21,7 +21,7 @@ public class MyBatisFlexConfiguration {
     @PostConstruct
     public void init() {
         //开启审计功能
-        AuditManager.setAuditEnable(true);
+        AuditManager.setAuditEnable(false);
         //自定义消息工厂
         FlexSqlMessageCollector creator = new FlexSqlMessageCollector();
         AuditManager.setMessageCollector(creator);

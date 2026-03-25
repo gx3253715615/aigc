@@ -4,6 +4,7 @@ import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.UploadWorkRequest;
 import com.blockchain.aigc.dto.WorkDTO;
 import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.enums.AuditStatusEnum;
 import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.service.UserService;
 import com.blockchain.aigc.service.WorkService;
@@ -112,7 +113,33 @@ public class WorkController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
+    @GetMapping("/admin/list")
+    public ApiResponse<Page<WorkDTO>> getAdminWorkList(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) AuditStatusEnum status) {
+        try {
+            Page<WorkDTO> page = workService.getAdminWorkList(pageNum, pageSize, keyword, status);
+            return ApiResponse.success(page);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    @PutMapping("/admin/{id}/audit")
+    public ApiResponse<String> auditWork(
+            @PathVariable Long id,
+            @RequestParam AuditStatusEnum status) {
+        try {
+            workService.auditWork(id, status);
+            return ApiResponse.success("审核成功", null);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
     /**
      * 手动确权
      */

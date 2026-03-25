@@ -5,6 +5,7 @@ export interface User {
   email?: string
   avatarPath?: string
   avatarUrl?: string
+  isAdmin?: number
   authStatus: 'INIT' | 'AUTH'
   status: 'ENABLE' | 'DISABLE'
   walletAddress?: string
@@ -15,6 +16,16 @@ export interface UserLookup {
   username: string
   phone?: string
   email?: string
+}
+
+export interface AdminUser {
+  id: number
+  username: string
+  phone?: string
+  email?: string
+  isAdmin?: number
+  authStatus: 'INIT' | 'AUTH'
+  status: 'ENABLE' | 'DISABLE'
 }
 
 export interface LoginRequest {

@@ -30,6 +30,9 @@ public class User extends Base {
     @Column(value = "avatar_path")
     private String avatarPath;
 
+    @Column(value = "is_admin")
+    private Integer isAdmin;
+
     @Column(value = "auth_status")
     private UserAuthEnum authStatus;
 

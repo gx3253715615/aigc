@@ -1,6 +1,7 @@
 package com.blockchain.aigc.entity;
 
 import com.blockchain.aigc.enums.FileTypeEnum;
+import com.blockchain.aigc.enums.AuditStatusEnum;
 import com.blockchain.aigc.enums.LicenseTypeEnum;
 import com.blockchain.aigc.enums.WorkStatusEnum;
 import com.blockchain.aigc.enums.RightTypeEnum;
@@ -78,6 +79,10 @@ public class Work extends Base {
     // 授权类型
     @Column(value = "license_type")
     private LicenseTypeEnum licenseType;
+
+    // 审核状态
+    @Column(value = "status")
+    private AuditStatusEnum status;
 
     // 链上交易hash
     @Column(value = "chain_tx_hash")

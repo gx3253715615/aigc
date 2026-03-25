@@ -11,9 +11,18 @@
       <el-table :data="works" v-loading="loading" style="width: 100%">
         <el-table-column prop="fileName" label="文件名" min-width="220" />
         <el-table-column prop="fileType" label="类型" width="110" />
-        <el-table-column label="状态" width="130">
+        <el-table-column label="作品状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.workStatus)">{{ row.workStatus }}</el-tag>
+            <el-tag :type="getStatusType(row.workStatus)" size="small">
+              {{ formatWorkStatus(row.workStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getAuditStatusType(row.status)" size="small">
+              {{ formatAuditStatus(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="上传时间" width="180" />
@@ -23,7 +32,9 @@
             <el-button
               v-if="row.workStatus === 'UPLOADED'"
               size="small"
-              type="success"
+              type="primary"
+              plain
+              :disabled="row.status !== 'PASS'"
               @click="certifyWork(row)"
             >
               确权
@@ -31,7 +42,9 @@
             <el-button
               v-if="row.workStatus === 'CERTIFIED'"
               size="small"
-              type="warning"
+              type="success"
+              plain
+              :disabled="row.status !== 'PASS'"
               @click="transferWork(row)"
             >
               转让
@@ -245,6 +258,24 @@ const getStatusType = (status: string) => {
     'OFFLINE': 'danger'
   }
   return types[status] || 'info'
+}
+
+const getAuditStatusType = (status: string) => {
+  const map: any = {
+    PENDING: 'warning',
+    PASS: 'success',
+    REJECT: 'danger'
+  }
+  return map[status] || 'info'
+}
+
+const formatAuditStatus = (status: string) => {
+  const map: any = {
+    PENDING: '待审核',
+    PASS: '通过',
+    REJECT: '拒绝'
+  }
+  return map[status] || status
 }
 
 const formatFileType = (fileType: Work['fileType']) => {

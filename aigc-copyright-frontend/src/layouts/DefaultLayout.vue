@@ -33,6 +33,14 @@
             <el-icon><Coin /></el-icon>
             <span>区块链查询</span>
           </el-menu-item>
+          <el-menu-item v-if="isAdmin" index="/admin/users">
+            <el-icon><Setting /></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
+          <el-menu-item v-if="isAdmin" index="/admin/works">
+            <el-icon><Checked /></el-icon>
+            <span>作品审核</span>
+          </el-menu-item>
         </el-menu>
       </el-scrollbar>
 
@@ -104,7 +112,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { HomeFilled, Document, Upload, Refresh, Coin, UserFilled, Lock, ArrowDown } from '@element-plus/icons-vue'
+import { HomeFilled, Document, Upload, Refresh, Coin, UserFilled, Lock, ArrowDown, Setting, Checked } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import RealnameAuthDialog from '@/components/RealnameAuthDialog.vue'
 import UserProfileDialog from '@/components/UserProfileDialog.vue'
@@ -120,6 +128,7 @@ const activeMenu = computed(() => route.path)
 const displayName = computed(() => userStore.user?.username || localStorage.getItem('username') || '用户')
 const authStatus = computed(() => userStore.user?.authStatus || 'INIT')
 const avatarSrc = computed(() => userStore.user?.avatarUrl || '')
+const isAdmin = computed(() => userStore.user?.isAdmin === 1)
 
 const goDashboard = () => {
   router.push('/dashboard')

@@ -15,6 +15,7 @@ export interface Work {
   prompt?: string
   creationType?: string
   workStatus: 'INIT' | 'UPLOADED' | 'CERTIFIED' | 'OFFLINE' | 'TRANSFERRED'
+  status: 'PENDING' | 'PASS' | 'REJECT'
   rightType: 'RIGHT_OWNERSHIP' | 'RIGHT_USAGE'
   licenseType: 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE'
   chainTxHash?: string

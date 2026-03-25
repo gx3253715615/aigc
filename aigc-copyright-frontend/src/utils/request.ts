@@ -44,16 +44,17 @@ request.interceptors.request.use(
       return { data, message } as ApiResult<any>
     }
     ElMessage.error(message || '请求失败')
-    return Promise.reject(new Error(message || '请求失败'))
+    return new Promise(() => {})
   },
   (error: any) => {
     if (error.response?.status === 401) {
+      const msg = error.response?.data?.message
       localStorage.removeItem('token')
       localStorage.removeItem('userId')
       localStorage.removeItem('username')
       localStorage.removeItem('walletAddress')
       router.push('/login')
-      ElMessage.error('登录已过期，请重新登录')
+      ElMessage.error(msg || '登录已过期，请重新登录')
     } else {
       ElMessage.error(error.message || '网络错误')
     }

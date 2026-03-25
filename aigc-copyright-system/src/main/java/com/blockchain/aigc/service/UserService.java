@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
+import com.blockchain.aigc.dto.AdminUserDTO;
 import com.blockchain.aigc.dto.UserLookupDTO;
 import com.blockchain.aigc.dto.UserProfileDTO;
 import com.blockchain.aigc.entity.User;
@@ -18,6 +19,7 @@ import com.blockchain.aigc.mapper.UserRealnameMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.utils.JwtUtil;
 import com.blockchain.aigc.utils.UserUtil;
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.fisco.bcos.sdk.v3.crypto.CryptoSuite;
@@ -31,7 +33,9 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.blockchain.aigc.entity.table.UserRealnameTableDef.USER_REALNAME;
@@ -79,6 +83,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         user.setEmail(request.getEmail());
         user.setAuthStatus(UserAuthEnum.INIT);  // 用户初始状态为未认证
         user.setStatus(UserStatusEnum.ENABLE);
+        user.setIsAdmin(0);
 
         userMapper.insert(user);
 
@@ -111,7 +116,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         }
 
         if (user.getStatus() == UserStatusEnum.DISABLE) {
-            throw new RuntimeException("账号已被禁用");
+            throw new RuntimeException(buildDisabledMessage());
         }
 
         // 获取钱包地址
@@ -129,6 +134,34 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         result.put("walletAddress", wallet != null ? wallet.getWalletAddress() : null);
 
         return result;
+    }
+
+    public String getAdminContact() {
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(USER.IS_ADMIN.eq(1))
+                .orderBy(USER.ID.asc());
+        User admin = userMapper.selectOneByQuery(queryWrapper);
+        if (admin == null) {
+            return "管理员";
+        }
+
+        List<String> contacts = new ArrayList<>();
+        if (admin.getPhone() != null && !admin.getPhone().trim().isEmpty()) {
+            contacts.add("电话：" + admin.getPhone().trim());
+        }
+        if (admin.getEmail() != null && !admin.getEmail().trim().isEmpty()) {
+            contacts.add("邮箱：" + admin.getEmail().trim());
+        }
+
+        if (contacts.isEmpty()) {
+            return "管理员";
+        } else {
+            return String.join("，", contacts);
+        }
+    }
+
+    public String buildDisabledMessage() {
+        return "账号已被禁用，请联系管理员：" + getAdminContact();
     }
 
     public UserProfileDTO getProfile() {
@@ -160,6 +193,77 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     public User getUserById(Long userId) {
         return userMapper.selectOneById(userId);
+    }
+
+    public Page<AdminUserDTO> getAdminUserList(int pageNum, int pageSize, String keyword) {
+        User admin = UserUtil.get();
+        if (admin == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        if (admin.getIsAdmin() == null || admin.getIsAdmin() != 1) {
+            throw new RuntimeException("无权限");
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create().orderBy(USER.ID.desc());
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String k = "%" + keyword.trim() + "%";
+            queryWrapper.where(USER.USERNAME.like(k))
+                    .or(USER.PHONE.like(k))
+                    .or(USER.EMAIL.like(k));
+        }
+
+        Page<User> page = userMapper.paginate(pageNum, pageSize, queryWrapper);
+        List<AdminUserDTO> dtoList = new ArrayList<>();
+        for (User u : page.getRecords()) {
+            AdminUserDTO dto = new AdminUserDTO();
+            BeanUtils.copyProperties(u, dto);
+            dtoList.add(dto);
+        }
+
+        Page<AdminUserDTO> dtoPage = new Page<>();
+        dtoPage.setRecords(dtoList);
+        dtoPage.setPageNumber(page.getPageNumber());
+        dtoPage.setPageSize(page.getPageSize());
+        dtoPage.setTotalRow(page.getTotalRow());
+        return dtoPage;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserStatusByAdmin(Long targetUserId, UserStatusEnum status) {
+        User admin = UserUtil.get();
+        if (admin == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        if (admin.getIsAdmin() == null || admin.getIsAdmin() != 1) {
+            throw new RuntimeException("无权限");
+        }
+        if (targetUserId == null) {
+            throw new RuntimeException("用户ID不能为空");
+        }
+        if (admin.getId().equals(targetUserId)) {
+            throw new RuntimeException("不能修改自己的状态");
+        }
+
+        User target = userMapper.selectOneById(targetUserId);
+        if (target == null) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        if (status == UserStatusEnum.DISABLE && target.getIsAdmin() != null && target.getIsAdmin() == 1) {
+            QueryWrapper q = QueryWrapper.create()
+                    .select(USER.ID)
+                    .where(USER.IS_ADMIN.eq(1))
+                    .and(USER.STATUS.eq(UserStatusEnum.ENABLE));
+            List<User> enabledAdmins = userMapper.selectListByQuery(q);
+            if (enabledAdmins.size() <= 1) {
+                throw new RuntimeException("至少保留一个启用的管理员账号");
+            }
+        }
+
+        User updateUser = new User();
+        updateUser.setId(targetUserId);
+        updateUser.setStatus(status);
+        userMapper.update(updateUser);
     }
 
     public UserLookupDTO lookupByPhoneOrEmail(String keyword) {

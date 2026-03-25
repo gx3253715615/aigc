@@ -8,6 +8,7 @@ import com.blockchain.aigc.dto.WorkDTO;
 import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserWallet;
 import com.blockchain.aigc.entity.Work;
+import com.blockchain.aigc.enums.AuditStatusEnum;
 import com.blockchain.aigc.enums.FileTypeEnum;
 import com.blockchain.aigc.enums.LicenseTypeEnum;
 import com.blockchain.aigc.enums.RightTypeEnum;
@@ -124,6 +125,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             work.setPrompt(request.getPrompt());
             work.setCreationType(request.getCreationType());
             work.setWorkStatus(WorkStatusEnum.UPLOADED);
+            work.setStatus(AuditStatusEnum.PENDING);
             work.setRightType(RightTypeEnum.RIGHT_OWNERSHIP);
             work.setLicenseType(LicenseTypeEnum.PERSONAL);
 
@@ -218,6 +220,57 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         dtoPage.setTotalRow(page.getTotalRow());
 
         return dtoPage;
+    }
+
+    public Page<WorkDTO> getAdminWorkList(int pageNum, int pageSize, String keyword, AuditStatusEnum status) {
+        User admin = UserUtil.get();
+        if (admin == null || admin.getIsAdmin() != 1) {
+            throw new RuntimeException("无权限");
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create().orderBy(WORK.CREATE_TIME.desc());
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.where(WORK.FILE_NAME.like("%" + keyword.trim() + "%"))
+                    .or(WORK.WORK_ID.like("%" + keyword.trim() + "%"));
+        }
+        if (status != null) {
+            queryWrapper.and(WORK.STATUS.eq(status));
+        }
+
+        Page<Work> page = workMapper.paginate(pageNum, pageSize, queryWrapper);
+        List<WorkDTO> dtoList = page.getRecords().stream().map(work -> {
+            WorkDTO dto = new WorkDTO();
+            BeanUtils.copyProperties(work, dto);
+            User user = userService.getUserById(work.getUserId());
+            if (user != null) {
+                dto.setUserName(user.getUsername());
+            }
+            dto.setFileUrl(minioService.getFileUrl(work.getMinioPath()));
+            return dto;
+        }).collect(Collectors.toList());
+
+        Page<WorkDTO> dtoPage = new Page<>();
+        dtoPage.setRecords(dtoList);
+        dtoPage.setPageNumber(page.getPageNumber());
+        dtoPage.setPageSize(page.getPageSize());
+        dtoPage.setTotalRow(page.getTotalRow());
+        return dtoPage;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void auditWork(Long id, AuditStatusEnum status) {
+        User admin = UserUtil.get();
+        if (admin == null || admin.getIsAdmin() != 1) {
+            throw new RuntimeException("无权限");
+        }
+
+        Work work = workMapper.selectOneById(id);
+        if (work == null) {
+            throw new RuntimeException("作品不存在");
+        }
+
+        work.setStatus(status);
+        workMapper.update(work);
     }
 
     @Transactional(rollbackFor = Exception.class)

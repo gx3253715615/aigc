@@ -5,15 +5,12 @@ import com.blockchain.aigc.enums.UserStatusEnum;
 import lombok.Data;
 
 @Data
-public class UserProfileDTO {
+public class AdminUserDTO {
     private Long id;
     private String username;
     private String phone;
     private String email;
-    private String avatarPath;
-    private String avatarUrl;
     private Integer isAdmin;
     private UserAuthEnum authStatus;
     private UserStatusEnum status;
-    private String walletAddress;
 }

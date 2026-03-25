@@ -21,6 +21,7 @@ C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\bloc
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\handler\db\CustomizeLogicDeleteProcessor.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\handler\exception\GlobalException.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\enums\UserAuthEnum.java
+C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\controller\AdminUserController.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\dto\WorkDTO.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\dto\LoginRequest.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\dto\TransferHistoryDTO.java
@@ -44,6 +45,7 @@ C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\bloc
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\dto\CopyrightTransferRequest.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\service\MinioService.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\enums\TransferStatusEnum.java
+C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\dto\AdminUserDTO.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\mapper\UserWalletMapper.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\enums\LicenseTypeEnum.java
 C:\Users\gaoxinyu\Desktop\myxm\aigc\aigc-copyright-system\src\main\java\com\blockchain\aigc\service\WorkService.java

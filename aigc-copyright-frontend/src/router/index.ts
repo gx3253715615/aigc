@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +54,18 @@ const router = createRouter({
       name: 'blockchain',
       component: () => import('@/views/BlockchainPage.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('@/views/AdminUsersPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/works',
+      name: 'admin-works',
+      component: () => import('@/views/AdminWorksPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
     }
   ]
 })
@@ -63,6 +76,9 @@ router.beforeEach((to, _from, next) => {
   
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     next('/login')
+  } else if (to.meta.requiresAdmin && userStore.user?.isAdmin !== 1) {
+    ElMessage.error('无权限访问')
+    next('/dashboard')
   } else {
     next()
   }
