@@ -124,15 +124,17 @@ public class CopyrightCertClient {
     }
 
     // 链上确权作品
-    public void confirmCopyright(String workId) {
+    public TransactionReceipt confirmCopyright(String workId) {
         try {
             String contractAddress = loadCopyrightCertAddr();
             CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, cryptoKeyPair);
             // 获取链上信息
             TransactionReceipt receipt = copyrightCert.confirmCopyright(new BigInteger(workId));
+            return receipt;
         } catch (Exception e) {
             logger.error(" registerWork exception, error message is {}", e.getMessage());
         }
+        return null;
     }
 
     // 查询链上作品信息

@@ -8,6 +8,17 @@ export const getTransferHistory = (workId: string, pageNum = 1, pageSize = 10) =
   })
 }
 
+export const getMyTransferHistory = (
+  direction: 'ALL' | 'OUT' | 'IN' = 'ALL',
+  workId?: string,
+  pageNum = 1,
+  pageSize = 10
+) => {
+  return request.get<PageResult<CopyrightTransfer>>('/copyright/transfers/my', {
+    params: { direction, workId, pageNum, pageSize }
+  })
+}
+
 export const getTransferById = (id: number) => {
   return request.get<CopyrightTransfer>(`/copyright/transfers/${id}`)
 }

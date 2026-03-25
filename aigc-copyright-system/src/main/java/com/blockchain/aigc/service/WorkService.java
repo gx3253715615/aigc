@@ -22,6 +22,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.fisco.bcos.sdk.v3.model.TransactionReceipt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -302,8 +303,13 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         }
 
         // 确权作品
-        copyrightCertClient.confirmCopyright(workId);
+        TransactionReceipt receipt = copyrightCertClient.confirmCopyright(workId);
 
+        if (receipt == null) {
+            throw new RuntimeException("作品确权失败");
+        }
+        // 更新作品状态
+        updateWorkStatus(workId, WorkStatusEnum.CERTIFIED, receipt.getTransactionHash(), receipt.getBlockNumber().longValue());
         //QueryWrapper queryWrapper = QueryWrapper.create()
         //        .where(USER_WALLET.USER_ID.eq(currentUser.getId()));
         //UserWallet wallet = userWalletMapper.selectOneByQuery(queryWrapper);

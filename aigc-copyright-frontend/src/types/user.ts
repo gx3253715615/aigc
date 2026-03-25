@@ -3,9 +3,18 @@ export interface User {
   username: string
   phone?: string
   email?: string
+  avatarPath?: string
+  avatarUrl?: string
   authStatus: 'INIT' | 'AUTH'
   status: 'ENABLE' | 'DISABLE'
   walletAddress?: string
+}
+
+export interface UserLookup {
+  id: number
+  username: string
+  phone?: string
+  email?: string
 }
 
 export interface LoginRequest {

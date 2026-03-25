@@ -1,6 +1,8 @@
 package com.blockchain.aigc.service;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
+import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.client.CopyrightTransferClient;
 import com.blockchain.aigc.dto.CopyrightTransferRequest;
 import com.blockchain.aigc.dto.TransferHistoryDTO;
@@ -9,6 +11,7 @@ import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserWallet;
 import com.blockchain.aigc.entity.Work;
 import com.blockchain.aigc.enums.*;
+import com.blockchain.aigc.handler.exception.GlobalException;
 import com.blockchain.aigc.mapper.CopyrightTransferMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.mapper.WorkMapper;
@@ -16,6 +19,7 @@ import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import org.fisco.bcos.sdk.v3.model.TransactionReceipt;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,35 +54,41 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
     @Autowired
     private CopyrightTransferClient copyrightTransferClient;
 
+    @Autowired
+    private BaseClient baseClient;
+
 
     @Transactional(rollbackFor = Exception.class)
     public TransferHistoryDTO transferCopyright(CopyrightTransferRequest request) {
         User fromUser = UserUtil.get();
         if (fromUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException("用户未登录");
         }
 
         // 检查用户认证状态
         if (fromUser.getAuthStatus() != UserAuthEnum.AUTH) {
-            throw new RuntimeException("用户未通过实名认证，无法进行版权转让");
+            throw new GlobalException("用户未通过实名认证，无法进行版权转让");
         }
-
+        // 受让方认证检查
         User toUser = userService.getUserById(request.getToUserId());
         if (toUser == null) {
-            throw new RuntimeException("受让方用户不存在");
+            throw new GlobalException("受让方用户不存在");
+        }
+        if (toUser.getAuthStatus() != UserAuthEnum.AUTH) {
+            throw new GlobalException("受让方用户未通过实名认证，无法进行版权转让");
         }
 
         Work work = workService.getWorkEntityByWorkId(request.getWorkId());
         if (work == null) {
-            throw new RuntimeException("作品不存在");
+            throw new GlobalException("作品不存在");
         }
 
         if (!work.getUserId().equals(fromUser.getId())) {
-            throw new RuntimeException("无权转让该作品");
+            throw new GlobalException("无权转让该作品");
         }
 
         if (work.getWorkStatus() != WorkStatusEnum.CERTIFIED) {
-            throw new RuntimeException("作品未确权，无法转让");
+            throw new GlobalException("作品未确权，无法转让");
         }
 
         // 获取双方钱包地址
@@ -91,7 +101,7 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         UserWallet toWallet = userWalletMapper.selectOneByQuery(toWalletQuery);
 
         if (fromWallet == null || toWallet == null) {
-            throw new RuntimeException("钱包地址不存在");
+            throw new GlobalException("钱包地址不存在");
         }
 
         // 创建转让记录
@@ -127,14 +137,19 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
 
         try {
             // 调用区块链服务进行链上转让
-            String txHash = copyrightTransferClient.createTransfer(
+            TransactionReceipt receipt = copyrightTransferClient.createTransfer(
                     transId,
                     work.getWorkId(),
                     work.getFileHash(),
                     toWallet.getWalletAddress(),
                     request.getTransferType());
 
+            String txHash = receipt.getTransactionHash();
             transfer.setChainTxHash(txHash);
+            transfer.setBlockNumber(receipt.getBlockNumber().longValue());
+            transfer.setContractAddress(receipt.getContractAddress());
+            LocalDateTime blockTime = LocalDateTimeUtil.of(baseClient.getTimestamp(receipt.getBlockNumber()));
+            transfer.setBlockTime(blockTime);
             transfer.setChainStatus(ChainStatusEnum.SUCCESS);
             transfer.setTransferStatus(TransferStatusEnum.CONFIRMED);
             copyrightTransferMapper.update(transfer);
@@ -165,6 +180,59 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(COPYRIGHT_TRANSFER.WORK_ID.eq(workId))
                 .orderBy(COPYRIGHT_TRANSFER.CREATE_TIME.desc());
+
+        Page<CopyrightTransfer> page = copyrightTransferMapper.paginate(pageNum, pageSize, queryWrapper);
+
+        List<TransferHistoryDTO> dtoList = page.getRecords().stream().map(transfer -> {
+            TransferHistoryDTO dto = new TransferHistoryDTO();
+            BeanUtils.copyProperties(transfer, dto);
+
+            User fromUser = userService.getUserById(transfer.getFromUserId());
+            User toUser = userService.getUserById(transfer.getToUserId());
+
+            if (fromUser != null) {
+                dto.setFromUserName(fromUser.getUsername());
+            }
+            if (toUser != null) {
+                dto.setToUserName(toUser.getUsername());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        Page<TransferHistoryDTO> dtoPage = new Page<>();
+        dtoPage.setRecords(dtoList);
+        dtoPage.setPageNumber(page.getPageNumber());
+        dtoPage.setPageSize(page.getPageSize());
+        dtoPage.setTotalRow(page.getTotalRow());
+
+        return dtoPage;
+    }
+
+    public Page<TransferHistoryDTO> getMyTransferHistory(Long userId, String direction, String workId, int pageNum, int pageSize) {
+        String mode = direction == null ? "ALL" : direction.trim().toUpperCase();
+        if (!mode.equals("ALL") && !mode.equals("OUT") && !mode.equals("IN")) {
+            throw new RuntimeException("direction 参数错误，可选 ALL/OUT/IN");
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create();
+
+        if (workId != null && !workId.trim().isEmpty()) {
+            queryWrapper.where(COPYRIGHT_TRANSFER.WORK_ID.eq(workId.trim()));
+        }
+
+        if (mode.equals("OUT")) {
+            queryWrapper.and(COPYRIGHT_TRANSFER.FROM_USER_ID.eq(userId));
+        } else if (mode.equals("IN")) {
+            queryWrapper.and(COPYRIGHT_TRANSFER.TO_USER_ID.eq(userId));
+        } else {
+            queryWrapper.and(
+                    COPYRIGHT_TRANSFER.FROM_USER_ID.eq(userId)
+                            .or(COPYRIGHT_TRANSFER.TO_USER_ID.eq(userId))
+            );
+        }
+
+        queryWrapper.orderBy(COPYRIGHT_TRANSFER.CREATE_TIME.desc());
 
         Page<CopyrightTransfer> page = copyrightTransferMapper.paginate(pageNum, pageSize, queryWrapper);
 

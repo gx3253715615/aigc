@@ -4,11 +4,15 @@ import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RealnameAuthRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
+import com.blockchain.aigc.dto.UserLookupDTO;
 import com.blockchain.aigc.dto.UserProfileDTO;
+import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserRealname;
 import com.blockchain.aigc.service.UserService;
+import com.blockchain.aigc.utils.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.Map;
@@ -73,6 +77,16 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+    @PostMapping("/avatar")
+    public ApiResponse<Map<String, Object>> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, Object> result = userService.uploadAvatar(file);
+            return ApiResponse.success("上传成功", result);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
     
     /**
      * 实名认证
@@ -95,6 +109,24 @@ public class UserController {
         try {
             UserRealname auth = userService.getRealnameAuth();
             return ApiResponse.success(auth);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/lookup")
+    public ApiResponse<UserLookupDTO> lookupUser(@RequestParam String keyword) {
+        try {
+            User currentUser = UserUtil.get();
+            if (currentUser == null) {
+                return ApiResponse.error("用户未登录");
+            }
+
+            UserLookupDTO dto = userService.lookupByPhoneOrEmail(keyword);
+            if (dto == null) {
+                return ApiResponse.success("未找到对应用户", null);
+            }
+            return ApiResponse.success(dto);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }

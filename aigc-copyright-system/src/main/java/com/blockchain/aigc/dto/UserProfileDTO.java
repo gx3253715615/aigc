@@ -6,11 +6,12 @@ import lombok.Data;
 
 @Data
 public class UserProfileDTO {
-
     private Long id;
     private String username;
     private String phone;
     private String email;
+    private String avatarPath;
+    private String avatarUrl;
     private UserAuthEnum authStatus;
     private UserStatusEnum status;
     private String walletAddress;

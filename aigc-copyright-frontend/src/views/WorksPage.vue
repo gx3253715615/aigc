@@ -6,12 +6,6 @@
         <div class="subtitle">上传、确权与转让你的 AIGC 作品</div>
       </div>
     </template>
-    <template #header-actions>
-      <el-button type="primary" @click="goToUpload">
-        <el-icon><Plus /></el-icon>
-        上传新作品
-      </el-button>
-    </template>
 
     <el-card class="panel" shadow="never">
       <el-table :data="works" v-loading="loading" style="width: 100%">
@@ -60,35 +54,113 @@
     </el-card>
 
     <!-- Work Detail Dialog -->
-    <el-dialog v-model="detailVisible" title="作品详情" width="700px">
-      <div v-if="selectedWork" class="work-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="作品 ID">{{ selectedWork.workId }}</el-descriptions-item>
-          <el-descriptions-item label="文件名">{{ selectedWork.fileName }}</el-descriptions-item>
-          <el-descriptions-item label="文件类型">{{ selectedWork.fileType }}</el-descriptions-item>
-          <el-descriptions-item label="文件大小">{{ formatSize(selectedWork.fileSize) }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="getStatusType(selectedWork.workStatus)">{{ selectedWork.workStatus }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="权利类型">{{ selectedWork.rightType }}</el-descriptions-item>
-          <el-descriptions-item label="上传时间" :span="2">{{ selectedWork.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="文件哈希" :span="2">{{ selectedWork.fileHash }}</el-descriptions-item>
-          <el-descriptions-item v-if="selectedWork.chainTxHash" label="交易哈希" :span="2">
-            {{ selectedWork.chainTxHash }}
-          </el-descriptions-item>
-          <el-descriptions-item v-if="selectedWork.summary" label="摘要" :span="2">
-            {{ selectedWork.summary }}
-          </el-descriptions-item>
-        </el-descriptions>
+    <el-dialog
+      v-model="detailVisible"
+      title="作品详情"
+      width="680px"
+      top="7vh"
+      class="work-detail-dialog"
+    >
+      <div class="work-detail" v-loading="detailLoading">
+        <el-tabs v-if="selectedWork" v-model="detailTab" class="detail-tabs" stretch>
+          <el-tab-pane label="基础" name="base">
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="主键 ID">{{ selectedWork.id }}</el-descriptions-item>
+              <el-descriptions-item label="作品 ID">{{ selectedWork.workId }}</el-descriptions-item>
+              <el-descriptions-item label="用户 ID">{{ selectedWork.userId }}</el-descriptions-item>
+              <el-descriptions-item label="用户名">{{ selectedWork.userName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="文件名" :span="2">
+                <div class="wrap">{{ selectedWork.fileName }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item label="文件类型">{{ formatFileType(selectedWork.fileType) }}</el-descriptions-item>
+              <el-descriptions-item label="文件大小">{{ formatSize(selectedWork.fileSize) }}</el-descriptions-item>
+              <el-descriptions-item label="状态">
+                <el-tag :type="getStatusType(selectedWork.workStatus)">{{ formatWorkStatus(selectedWork.workStatus) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="上传时间">{{ formatDateTime(selectedWork.createTime) }}</el-descriptions-item>
+              <el-descriptions-item label="权利类型">
+                <el-tag type="info">{{ formatRightType(selectedWork.rightType) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="许可类型">
+                <el-tag type="info">{{ formatLicenseType(selectedWork.licenseType) }}</el-tag>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-tab-pane>
+
+          <el-tab-pane label="链上" name="chain">
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="文件哈希">
+                <div class="mono wrap">{{ selectedWork.fileHash }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item label="交易哈希">
+                <div class="mono wrap">{{ selectedWork.chainTxHash || '-' }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item label="区块高度">
+                {{ selectedWork.blockNumber !== undefined && selectedWork.blockNumber !== null ? selectedWork.blockNumber : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="文件访问链接">
+                <el-link v-if="selectedWork.fileUrl" :href="selectedWork.fileUrl" target="_blank" type="primary">
+                  {{ selectedWork.fileUrl }}
+                </el-link>
+                <span v-else>-</span>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-tab-pane>
+
+          <el-tab-pane label="模型/描述" name="model">
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="创作类型">{{ formatCreationType(selectedWork.creationType) }}</el-descriptions-item>
+              <el-descriptions-item label="模型名称">{{ selectedWork.modelName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="模型版本">{{ selectedWork.modelVersion || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="模型来源">{{ selectedWork.modelSource || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="摘要" :span="2">
+                <div class="scroll-box pre">{{ selectedWork.summary || '-' }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item label="生成提示词" :span="2">
+                <div class="scroll-box pre">{{ selectedWork.prompt || '-' }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item label="模型参数" :span="2">
+                <div class="scroll-box">
+                  <el-table v-if="modelParamsRows.length" :data="modelParamsRows" size="small" border style="width: 100%">
+                    <el-table-column prop="key" label="参数" width="200" />
+                    <el-table-column prop="value" label="值" />
+                  </el-table>
+                  <el-empty v-else description="无模型参数" />
+                </div>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-tab-pane>
+        </el-tabs>
+        <el-empty v-else-if="!detailLoading" description="暂无作品详情" />
       </div>
     </el-dialog>
 
     <!-- Transfer Dialog -->
     <el-dialog v-model="transferVisible" title="版权转让" width="600px">
       <el-form :model="transferForm" label-width="140px">
-        <el-form-item label="用户 ID">
-          <el-input v-model.number="transferForm.toUserId" placeholder="请输入用户 ID" />
+        <el-form-item label="受让人">
+          <el-input v-model="recipientKeyword" placeholder="输入对方手机号或邮箱">
+            <template #append>
+              <el-button :loading="lookupLoading" @click="handleLookupUser">查询</el-button>
+            </template>
+          </el-input>
         </el-form-item>
+
+        <el-form-item v-if="lookupTried" label="查询结果">
+          <el-card v-if="lookupUser" class="lookup-card" shadow="never">
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="用户名">{{ lookupUser.username }}</el-descriptions-item>
+              <el-descriptions-item label="手机号">{{ lookupUser.phone || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="邮箱" :span="2">{{ lookupUser.email || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <div class="lookup-actions">
+              <el-checkbox v-model="recipientChecked" :disabled="isSelfRecipient">选择该用户</el-checkbox>
+              <span v-if="isSelfRecipient" class="lookup-hint">不能选择自己</span>
+            </div>
+          </el-card>
+          <el-empty v-else description="找不到对应用户" />
+        </el-form-item>
+
         <el-form-item label="转让类型">
           <el-radio-group v-model="transferForm.transferType">
             <el-radio label="FULL_TRANSFER">全部转让</el-radio>
@@ -115,17 +187,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import { getMyWorks, certifyWork as certifyWorkApi } from '@/api/works'
+import { getMyWorks, certifyWork as certifyWorkApi, getWorkById } from '@/api/works'
+import { lookupUserByContact } from '@/api/auth'
 import { createTransfer } from '@/api/transfers'
 import type { Work } from '@/types/work'
-import { Plus } from '@element-plus/icons-vue'
+import type { UserLookup } from '@/types/user'
+import dayjs from 'dayjs'
 
-const router = useRouter()
 const userStore = useUserStore()
 
 const loading = ref(false)
@@ -135,8 +207,15 @@ const pageSize = ref(10)
 const total = ref(0)
 const detailVisible = ref(false)
 const selectedWork = ref<Work | null>(null)
+const detailLoading = ref(false)
+const detailTab = ref('base')
 const transferVisible = ref(false)
 const transfering = ref(false)
+const recipientKeyword = ref('')
+const lookupLoading = ref(false)
+const lookupTried = ref(false)
+const lookupUser = ref<UserLookup | null>(null)
+const recipientChecked = ref(false)
 
 const transferForm = ref({
   workId: '',
@@ -146,10 +225,20 @@ const transferForm = ref({
   tradeDesc: ''
 })
 
-const goToUpload = () => router.push('/upload')
+const currentUserId = computed(() => {
+  const idFromStore = userStore.user?.id
+  if (typeof idFromStore === 'number') return idFromStore
+  const id = Number(localStorage.getItem('userId') || 0)
+  return Number.isFinite(id) ? id : 0
+})
+
+const isSelfRecipient = computed(() => {
+  return !!lookupUser.value?.id && lookupUser.value.id === currentUserId.value
+})
 
 const getStatusType = (status: string) => {
   const types: Record<string, any> = {
+    'INIT': 'info',
     'UPLOADED': 'info',
     'CERTIFIED': 'success',
     'TRANSFERRED': 'warning',
@@ -158,11 +247,105 @@ const getStatusType = (status: string) => {
   return types[status] || 'info'
 }
 
+const formatFileType = (fileType: Work['fileType']) => {
+  const map: Record<Work['fileType'], string> = {
+    TEXT: '文本',
+    IMAGE: '图片',
+    AUDIO: '音频',
+    VIDEO: '视频',
+    OTHER: '其他'
+  }
+  return map[fileType] || fileType
+}
+
+const formatWorkStatus = (status: Work['workStatus']) => {
+  const map: Record<Work['workStatus'], string> = {
+    INIT: '初始化',
+    UPLOADED: '已上传',
+    CERTIFIED: '已确权',
+    OFFLINE: '已下线',
+    TRANSFERRED: '已转让'
+  }
+  return map[status] || status
+}
+
+const formatRightType = (rightType: Work['rightType']) => {
+  const map: Record<Work['rightType'], string> = {
+    RIGHT_OWNERSHIP: '著作权/所有权',
+    RIGHT_USAGE: '使用权'
+  }
+  return map[rightType] || rightType
+}
+
+const formatLicenseType = (licenseType: Work['licenseType']) => {
+  const map: Record<Work['licenseType'], string> = {
+    PERSONAL: '个人使用',
+    COMMERCIAL: '商业使用',
+    EXCLUSIVE: '独占许可'
+  }
+  return map[licenseType] || licenseType
+}
+
+const formatCreationType = (creationType?: Work['creationType']) => {
+  if (!creationType) return '-'
+  const map: Record<string, string> = {
+    AI_GENERATED: 'AI 生成',
+    HUMAN_AI_COLLAB: '人机协作',
+    AI_ASSISTED: 'AI 辅助'
+  }
+  return map[creationType] || creationType
+}
+
+const formatDateTime = (value: any) => {
+  if (!value) return '-'
+  const d = dayjs(value)
+  if (!d.isValid()) return String(value)
+  return d.format('YYYY-MM-DD HH:mm:ss')
+}
+
 const formatSize = (size: number) => {
   if (size < 1024) return size + ' B'
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
   return (size / 1024 / 1024).toFixed(2) + ' MB'
 }
+
+const modelParamsRows = computed(() => {
+  const params = selectedWork.value?.modelParams
+  if (!params || typeof params !== 'object') return []
+  return Object.entries(params).map(([key, value]) => ({
+    key,
+    value: typeof value === 'string' ? value : JSON.stringify(value)
+  }))
+})
+
+const handleLookupUser = async () => {
+  const keyword = recipientKeyword.value.trim()
+  if (!keyword) {
+    ElMessage.warning('请输入手机号或邮箱')
+    return
+  }
+  lookupLoading.value = true
+  lookupTried.value = true
+  lookupUser.value = null
+  recipientChecked.value = false
+  transferForm.value.toUserId = 0
+  try {
+    const response = await lookupUserByContact(keyword)
+    lookupUser.value = response.data
+  } catch (error: any) {
+    ElMessage.error('查询用户失败：' + (error?.message || '未知错误'))
+  } finally {
+    lookupLoading.value = false
+  }
+}
+
+watch(recipientChecked, (checked) => {
+  if (!lookupUser.value || isSelfRecipient.value) {
+    transferForm.value.toUserId = 0
+    return
+  }
+  transferForm.value.toUserId = checked ? lookupUser.value.id : 0
+})
 
 const loadWorks = async () => {
   loading.value = true
@@ -177,8 +360,19 @@ const loadWorks = async () => {
   }
 }
 
-const viewWork = (work: Work) => {
-  router.push(`/works/${work.id}`)
+const viewWork = async (work: Work) => {
+  detailVisible.value = true
+  detailLoading.value = true
+  selectedWork.value = null
+  try {
+    const response = await getWorkById(work.id)
+    selectedWork.value = response.data
+  } catch (error: any) {
+    ElMessage.error('获取作品详情失败：' + (error?.message || '未知错误'))
+    detailVisible.value = false
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 const certifyWork = async (work: Work) => {
@@ -202,11 +396,25 @@ const transferWork = (work: Work) => {
     return
   }
   
-  transferForm.value.workId = work.id.toString()
+  transferForm.value.workId = work.workId
+  transferForm.value.toUserId = 0
+  transferForm.value.tradeDesc = ''
+  recipientKeyword.value = ''
+  lookupTried.value = false
+  lookupUser.value = null
+  recipientChecked.value = false
   transferVisible.value = true
 }
 
 const handleTransfer = async () => {
+  if (!transferForm.value.toUserId) {
+    ElMessage.warning('请先查询并勾选受让人')
+    return
+  }
+  if (transferForm.value.toUserId === currentUserId.value) {
+    ElMessage.warning('不能转让给自己')
+    return
+  }
   transfering.value = true
   try {
     await createTransfer({
@@ -261,6 +469,78 @@ onMounted(() => {
   justify-content: center;
 }
 .work-detail {
-  padding: 20px 0;
+  padding: 10px 0;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.wrap {
+  word-break: break-all;
+}
+
+.pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(15, 23, 42, 0.78);
+}
+
+.work-detail-dialog :deep(.el-dialog) {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.work-detail-dialog :deep(.el-dialog__body) {
+  padding-top: 12px;
+  padding-bottom: 14px;
+  max-height: 64vh;
+  overflow: auto;
+}
+
+.work-detail-dialog :deep(.el-descriptions__label),
+.work-detail-dialog :deep(.el-descriptions__content) {
+  padding: 10px 12px;
+}
+
+.work-detail-dialog :deep(.el-tag) {
+  border-radius: 10px;
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0 0 12px;
+}
+
+.scroll-box {
+  max-height: 160px;
+  overflow: auto;
+}
+
+.lookup-card {
+  width: 100%;
+}
+
+.lookup-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lookup-hint {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+@media (min-width: 960px) {
+  .work-detail-dialog :deep(.el-dialog) {
+    transform: translateX(134px);
+  }
+}
+
+@media (max-width: 959px) {
+  .work-detail-dialog :deep(.el-dialog) {
+    transform: none;
+  }
 }
 </style>

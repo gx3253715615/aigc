@@ -11,7 +11,6 @@ import java.util.Map;
 
 @Data
 public class WorkDTO {
-    
     private Long id;
     private String workId;
     private Long userId;

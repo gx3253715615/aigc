@@ -6,9 +6,6 @@
         <div class="subtitle">概览你的作品确权与流转情况</div>
       </div>
     </template>
-    <template #header-actions>
-      <el-button type="primary" @click="goToUpload">上传作品</el-button>
-    </template>
 
     <div class="dashboard">
       <el-row :gutter="16">
@@ -102,6 +99,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { getMyWorks } from '@/api/works'
+import { getMyTransferHistory } from '@/api/transfers'
 import type { Work } from '@/types/work'
 import { Document, CircleCheck, Refresh, Wallet } from '@element-plus/icons-vue'
 
@@ -123,10 +121,6 @@ const shortAddress = computed(() => {
 
 const goToWorks = () => {
   router.push('/works')
-}
-
-const goToUpload = () => {
-  router.push('/upload')
 }
 
 const viewWork = (id: number) => {
@@ -153,7 +147,8 @@ const loadDashboardData = async () => {
     // Calculate stats
     stats.value.totalWorks = response.data.totalRow
     stats.value.certifiedWorks = response.data.records.filter(work => work.workStatus === 'CERTIFIED').length
-    // Note: Total transfers would require a separate API call
+    const transferRes = await getMyTransferHistory('ALL', undefined, 1, 1)
+    stats.value.totalTransfers = transferRes.data.totalRow
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
   } finally {

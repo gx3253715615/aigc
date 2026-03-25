@@ -30,6 +30,8 @@ public class UserTableDef extends TableDef {
 
     public final QueryColumn AUTH_STATUS = new QueryColumn(this, "auth_status");
 
+    public final QueryColumn AVATAR_PATH = new QueryColumn(this, "avatar_path");
+
     /**
      * 创建时间
      */
@@ -58,7 +60,7 @@ public class UserTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, EMAIL, PHONE, STATUS, PASSWORD, USERNAME, AUTH_STATUS, CREATE_TIME, UPDATE_TIME, CREATE_USER_ID, UPDATE_USER_ID};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, EMAIL, PHONE, STATUS, PASSWORD, USERNAME, AUTH_STATUS, AVATAR_PATH, CREATE_TIME, UPDATE_TIME, CREATE_USER_ID, UPDATE_USER_ID};
 
     public UserTableDef() {
         super("", "users");

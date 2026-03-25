@@ -36,15 +36,14 @@
         </el-upload>
 
         <el-form
-          v-if="fileSelected"
           ref="formRef"
           :model="uploadForm"
-          label-width="140px"
+          label-position="top"
           class="upload-form"
         >
           <el-divider />
           <el-form-item label="文件名">
-            <el-input v-model="uploadForm.fileName" disabled />
+            <el-input v-model="uploadForm.fileName" disabled placeholder="请选择文件" />
           </el-form-item>
           <el-form-item label="作品摘要">
             <el-input v-model="uploadForm.summary" type="textarea" :rows="3" placeholder="请简要描述您的作品" />
@@ -114,7 +113,6 @@ const userStore = useUserStore()
 const uploadRef = ref<UploadInstance>()
 const formRef = ref()
 const uploading = ref(false)
-const fileSelected = ref(false)
 const selectedFile = ref<File | null>(null)
 
 const uploadForm = ref({
@@ -132,7 +130,6 @@ const handleFileChange: UploadProps['onChange'] = (uploadFile) => {
   if (uploadFile.raw) {
     selectedFile.value = uploadFile.raw
     uploadForm.value.fileName = uploadFile.name
-    fileSelected.value = true
   }
 }
 
@@ -210,7 +207,6 @@ const handleUpload = async () => {
 const handleReset = () => {
   uploadRef.value?.clearFiles()
   selectedFile.value = null
-  fileSelected.value = false
   uploadForm.value = {
     fileName: '',
     summary: '',
@@ -255,6 +251,7 @@ const handleReset = () => {
 }
 
 .upload-card {
+  width: 100%;
   max-width: 980px;
   margin: 0 auto;
 }

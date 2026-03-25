@@ -36,10 +36,11 @@ mybatis-flex:
 
 # MinIO配置
 minio:
-  endpoint: http://121.196.234.221:9000
+  endpoint: http://192.168.133.136:9000
   access-key: minioadmin
-  secret-key: 12345678
+  secret-key: minioadmin
   bucket-name: aigc-works
+# webui http://192.168.133.136:43960
 
 # JWT配置
 jwt:

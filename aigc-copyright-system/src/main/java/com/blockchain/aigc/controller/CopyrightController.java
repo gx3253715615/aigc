@@ -17,10 +17,10 @@ import javax.validation.Valid;
 @RequestMapping("/api/copyright")
 @CrossOrigin
 public class CopyrightController {
-    
+
     @Autowired
     private CopyrightService copyrightService;
-    
+
     /**
      * 版权转让
      */
@@ -33,22 +33,19 @@ public class CopyrightController {
             if (currentUser == null) {
                 return ApiResponse.error("用户未登录");
             }
-            
-            if (currentUser.getAuthStatus() != UserAuthEnum.AUTH) {
-                return ApiResponse.error("用户未通过实名认证，无法进行版权转让");
-            }
-            
+
             TransferHistoryDTO result = copyrightService.transferCopyright(request);
             return ApiResponse.success("转让成功", result);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 查询转让历史
      */
     @GetMapping("/transfers")
+    @Deprecated
     public ApiResponse<Page<TransferHistoryDTO>> getTransferHistory(
             @RequestParam String workId,
             @RequestParam(defaultValue = "1") int pageNum,
@@ -60,7 +57,25 @@ public class CopyrightController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
+    @GetMapping("/transfers/my")
+    public ApiResponse<Page<TransferHistoryDTO>> getMyTransferHistory(
+            @RequestParam(defaultValue = "ALL") String direction,
+            @RequestParam(required = false) String workId,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        try {
+            User currentUser = UserUtil.get();
+            if (currentUser == null) {
+                return ApiResponse.error("用户未登录");
+            }
+            Page<TransferHistoryDTO> page = copyrightService.getMyTransferHistory(currentUser.getId(), direction, workId, pageNum, pageSize);
+            return ApiResponse.success(page);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
     /**
      * 获取转让详情
      */

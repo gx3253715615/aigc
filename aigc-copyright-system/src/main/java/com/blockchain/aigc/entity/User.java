@@ -27,6 +27,9 @@ public class User extends Base {
     @Column(value = "email")
     private String email;
 
+    @Column(value = "avatar_path")
+    private String avatarPath;
+
     @Column(value = "auth_status")
     private UserAuthEnum authStatus;
 

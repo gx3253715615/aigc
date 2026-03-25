@@ -1,8 +1,10 @@
 package com.blockchain.aigc.service;
 
+import cn.hutool.core.util.IdUtil;
 import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RegisterRequest;
+import com.blockchain.aigc.dto.UserLookupDTO;
 import com.blockchain.aigc.dto.UserProfileDTO;
 import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserRealname;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -49,6 +52,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private MinioService minioService;
 
     @Autowired
     private BaseClient baseClient;
@@ -139,6 +145,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         UserProfileDTO dto = new UserProfileDTO();
         BeanUtils.copyProperties(user, dto);
         dto.setWalletAddress(wallet != null ? wallet.getWalletAddress() : null);
+        if (user.getAvatarPath() != null && !user.getAvatarPath().isEmpty()) {
+            dto.setAvatarUrl(minioService.getFileUrl(user.getAvatarPath(), "photo"));
+        }
 
         return dto;
     }
@@ -151,6 +160,31 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     public User getUserById(Long userId) {
         return userMapper.selectOneById(userId);
+    }
+
+    public UserLookupDTO lookupByPhoneOrEmail(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String value = keyword.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(USER.PHONE.eq(value))
+                .or(USER.EMAIL.eq(value));
+        User user = userMapper.selectOneByQuery(queryWrapper);
+        if (user == null) {
+            return null;
+        }
+
+        UserLookupDTO dto = new UserLookupDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setPhone(user.getPhone());
+        dto.setEmail(user.getEmail());
+        return dto;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -189,10 +223,35 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (request.getEmail() != null) {
             updateUser.setEmail(request.getEmail());
         }
+        if (request.getAvatarPath() != null) {
+            updateUser.setAvatarPath(request.getAvatarPath());
+        }
 
         // authStatus、status、walletAddress 不允许用户更新，忽略这些字段
 
         userMapper.update(updateUser);
+    }
+
+    public Map<String, Object> uploadAvatar(MultipartFile file) {
+        User currentUser = UserUtil.get();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("文件不能为空");
+        }
+
+        String origin = file.getOriginalFilename() == null ? "avatar" : file.getOriginalFilename();
+        String safeName = origin.replaceAll("[\\\\/]", "_");
+        String objectName = "u_" + currentUser.getId() + "/" + IdUtil.getSnowflakeNextIdStr() + "_" + safeName;
+
+        minioService.uploadFile(file, objectName, "photo");
+        String url = minioService.getFileUrl(objectName, "photo");
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("avatarPath", objectName);
+        result.put("avatarUrl", url);
+        return result;
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -113,14 +113,13 @@ public class CopyrightTransferClient {
     }
 
     // 创建作品版权转让记录
-    public String createTransfer(String transferId, String workId,
-                                 String fileHash, String to, TransferTypeEnum transferType) {
+    public TransactionReceipt createTransfer(String transferId, String workId,
+                                             String fileHash, String to, TransferTypeEnum transferType) {
         try {
             String contractAddress = loadCopyrightTransferAddr();
             CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, cryptoKeyPair);
             // 获取链上信息
-            TransactionReceipt receipt = copyrightTransfer.createTransfer(new BigInteger(transferId), new BigInteger(workId), fileHash, to, BigInteger.valueOf(transferType.num));
-            return receipt.getTransactionHash();
+            return copyrightTransfer.createTransfer(new BigInteger(transferId), new BigInteger(workId), fileHash, to, BigInteger.valueOf(transferType.num));
         } catch (Exception e) {
             logger.error(" registerWork exception, error message is {}", e.getMessage());
         }

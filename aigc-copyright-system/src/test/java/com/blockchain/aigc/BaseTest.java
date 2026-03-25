@@ -2,6 +2,7 @@ package com.blockchain.aigc;
 
 import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.client.CopyrightCertClient;
+import com.blockchain.aigc.service.MinioService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +23,10 @@ public class BaseTest {
     @Autowired
     private CopyrightCertClient copyrightCertClient;
 
-    @Test
+    @Autowired
+    private MinioService minioService;
+
+    //@Test
     public void testClient() {
         copyrightCertClient.registerWork("123456", "654321", "0x123456");
         System.out.println("注册成功");
@@ -30,5 +34,14 @@ public class BaseTest {
         System.out.println("确权成功");
         Map<String, Object> work = copyrightCertClient.getWork("123456");
         System.out.println("111");
+    }
+
+    // 测试MinIO
+    //@Test
+    public void testMinIO() {
+        String objectName = "test.txt";
+        String url = minioService.uploadFile(null, objectName);
+        System.out.println(url);
+        minioService.deleteFile(objectName);
     }
 }
