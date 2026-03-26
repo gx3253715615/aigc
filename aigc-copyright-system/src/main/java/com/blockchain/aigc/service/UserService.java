@@ -10,10 +10,8 @@ import com.blockchain.aigc.dto.UserProfileDTO;
 import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserRealname;
 import com.blockchain.aigc.entity.UserWallet;
-import com.blockchain.aigc.enums.ChainTypeEnum;
-import com.blockchain.aigc.enums.UserAuthEnum;
-import com.blockchain.aigc.enums.UserStatusEnum;
-import com.blockchain.aigc.enums.VerifyStatusEnum;
+import com.blockchain.aigc.enums.*;
+import com.blockchain.aigc.handler.exception.GlobalException;
 import com.blockchain.aigc.mapper.UserMapper;
 import com.blockchain.aigc.mapper.UserRealnameMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
@@ -72,7 +70,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                 .where(USER.USERNAME.eq(request.getUsername()));
         User existUser = userMapper.selectOneByQuery(queryWrapper);
         if (existUser != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new GlobalException("用户名已存在");
         }
 
         // 创建用户
@@ -107,12 +105,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         User user = userMapper.selectOneByQuery(queryWrapper);
 
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new GlobalException("用户不存在");
         }
 
         String encryptedPassword = DigestUtils.md5DigestAsHex(request.getPassword().getBytes());
         if (!user.getPassword().equals(encryptedPassword)) {
-            throw new RuntimeException("密码错误");
+            throw new GlobalException("密码错误");
         }
 
         if (user.getStatus() == UserStatusEnum.DISABLE) {
@@ -167,7 +165,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public UserProfileDTO getProfile() {
         User user = UserUtil.get();
         if (user == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
 
         // 获取钱包地址
@@ -198,10 +196,10 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public Page<AdminUserDTO> getAdminUserList(int pageNum, int pageSize, String keyword) {
         User admin = UserUtil.get();
         if (admin == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
         if (admin.getIsAdmin() == null || admin.getIsAdmin() != 1) {
-            throw new RuntimeException("无权限");
+            throw new GlobalException("无权限");
         }
 
         QueryWrapper queryWrapper = QueryWrapper.create().orderBy(USER.ID.desc());
@@ -232,21 +230,21 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public void updateUserStatusByAdmin(Long targetUserId, UserStatusEnum status) {
         User admin = UserUtil.get();
         if (admin == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
         if (admin.getIsAdmin() == null || admin.getIsAdmin() != 1) {
-            throw new RuntimeException("无权限");
+            throw new GlobalException("无权限");
         }
         if (targetUserId == null) {
-            throw new RuntimeException("用户ID不能为空");
+            throw new GlobalException("用户ID不能为空");
         }
         if (admin.getId().equals(targetUserId)) {
-            throw new RuntimeException("不能修改自己的状态");
+            throw new GlobalException("不能修改自己的状态");
         }
 
         User target = userMapper.selectOneById(targetUserId);
         if (target == null) {
-            throw new RuntimeException("用户不存在");
+            throw new GlobalException("用户不存在");
         }
 
         if (status == UserStatusEnum.DISABLE && target.getIsAdmin() != null && target.getIsAdmin() == 1) {
@@ -256,7 +254,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                     .and(USER.STATUS.eq(UserStatusEnum.ENABLE));
             List<User> enabledAdmins = userMapper.selectListByQuery(q);
             if (enabledAdmins.size() <= 1) {
-                throw new RuntimeException("至少保留一个启用的管理员账号");
+                throw new GlobalException("至少保留一个启用的管理员账号");
             }
         }
 
@@ -295,12 +293,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public void updateProfile(UserProfileDTO request) {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
 
         // 只能更新自己的信息
         if (!currentUser.getId().equals(request.getId())) {
-            throw new RuntimeException("只能更新自己的信息");
+            throw new GlobalException("只能更新自己的信息");
         }
 
         // 检查用户名是否被占用（排除自己）
@@ -310,7 +308,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                     .and(USER.ID.ne(currentUser.getId()));
             User existUser = userMapper.selectOneByQuery(queryWrapper);
             if (existUser != null) {
-                throw new RuntimeException("用户名已被占用");
+                throw new GlobalException("用户名已被占用");
             }
         }
 
@@ -339,10 +337,10 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public Map<String, Object> uploadAvatar(MultipartFile file) {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("文件不能为空");
+            throw new GlobalException("文件不能为空");
         }
 
         String origin = file.getOriginalFilename() == null ? "avatar" : file.getOriginalFilename();
@@ -362,7 +360,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public void realnameAuth(String realName, String idNumber) {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
 
         // 检查是否已经实名认证
@@ -372,9 +370,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
         if (existingAuth != null) {
             if (existingAuth.getVerifyStatus() == VerifyStatusEnum.PASSED) {
-                throw new RuntimeException("用户已通过实名认证");
+                throw new GlobalException("用户已通过实名认证");
             } else if (existingAuth.getVerifyStatus() == VerifyStatusEnum.PENDING) {
-                throw new RuntimeException("实名认证已在审核中");
+                throw new GlobalException("实名认证已在审核中");
             }
         }
 
@@ -421,7 +419,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public UserRealname getRealnameAuth() {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
 
         QueryWrapper queryWrapper = QueryWrapper.create()

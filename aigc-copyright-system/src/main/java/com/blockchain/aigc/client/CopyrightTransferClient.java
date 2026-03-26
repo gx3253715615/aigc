@@ -10,6 +10,7 @@ import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
 import org.fisco.bcos.sdk.v3.model.TransactionReceipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.ClassPathResource;
@@ -38,6 +39,9 @@ public class CopyrightTransferClient {
     private BcosSDK bcosSDK;
     private Client client;
     private CryptoKeyPair cryptoKeyPair;
+
+    @Autowired
+    private BaseClient baseClient;
 
     @PostConstruct
     public void init() throws Exception {
@@ -117,7 +121,8 @@ public class CopyrightTransferClient {
                                              String fileHash, String to, TransferTypeEnum transferType) {
         try {
             String contractAddress = loadCopyrightTransferAddr();
-            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, cryptoKeyPair);
+            // 使用加载合约
+            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
             return copyrightTransfer.createTransfer(new BigInteger(transferId), new BigInteger(workId), fileHash, to, BigInteger.valueOf(transferType.num));
         } catch (Exception e) {
@@ -130,7 +135,8 @@ public class CopyrightTransferClient {
     public Map<String, Object> getTransfer(String transferId) {
         try {
             String contractAddress = loadCopyrightTransferAddr();
-            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, cryptoKeyPair);
+            // 可以使用默认keyPair
+            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
             Tuple6<BigInteger, String, String, String, BigInteger, BigInteger> transfer = copyrightTransfer.getTransfer(new BigInteger(transferId));
             Map<String, Object> map = new HashMap<>();
@@ -151,7 +157,7 @@ public class CopyrightTransferClient {
     public Map<String, Object> getWorkTransfers(String workId) {
         try {
             String contractAddress = loadCopyrightTransferAddr();
-            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, cryptoKeyPair);
+            CopyrightTransfer copyrightTransfer = CopyrightTransfer.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
             List workTransfers = copyrightTransfer.getWorkTransfers(new BigInteger(workId));
             return null;
@@ -159,5 +165,11 @@ public class CopyrightTransferClient {
             logger.error(" registerWork exception, error message is {}", e.getMessage());
         }
         return null;
+    }
+
+    private CryptoKeyPair getUserCryptoKeyPair() {
+        String pk = baseClient.loadUserKeyPair();
+        // 线程安全
+        return client.getCryptoSuite().getKeyPairFactory().createKeyPair(pk);
     }
 }

@@ -62,7 +62,7 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
     public TransferHistoryDTO transferCopyright(CopyrightTransferRequest request) {
         User fromUser = UserUtil.get();
         if (fromUser == null) {
-            throw new GlobalException("用户未登录");
+            throw new GlobalException(ResultEnum.NO_LOGIN);
         }
 
         // 检查用户认证状态
@@ -212,7 +212,7 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
     public Page<TransferHistoryDTO> getMyTransferHistory(Long userId, String direction, String workId, int pageNum, int pageSize) {
         String mode = direction == null ? "ALL" : direction.trim().toUpperCase();
         if (!mode.equals("ALL") && !mode.equals("OUT") && !mode.equals("IN")) {
-            throw new RuntimeException("direction 参数错误，可选 ALL/OUT/IN");
+            throw new GlobalException("direction 参数错误，可选 ALL/OUT/IN");
         }
 
         QueryWrapper queryWrapper = QueryWrapper.create();
@@ -265,7 +265,7 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
     public TransferHistoryDTO getTransferById(Long id) {
         CopyrightTransfer transfer = copyrightTransferMapper.selectOneById(id);
         if (transfer == null) {
-            throw new RuntimeException("转让记录不存在");
+            throw new GlobalException("转让记录不存在");
         }
 
         TransferHistoryDTO dto = new TransferHistoryDTO();

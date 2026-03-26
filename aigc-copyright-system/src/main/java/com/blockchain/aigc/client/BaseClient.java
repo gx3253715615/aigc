@@ -1,15 +1,23 @@
 package com.blockchain.aigc.client;
 
+import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.mapper.UserWalletMapper;
+import com.blockchain.aigc.utils.UserUtil;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.fisco.bcos.sdk.v3.BcosSDK;
 import org.fisco.bcos.sdk.v3.client.Client;
 import org.fisco.bcos.sdk.v3.client.protocol.response.BcosBlock;
 import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.management.Query;
 import java.math.BigInteger;
+
+import static com.blockchain.aigc.entity.table.UserWalletTableDef.USER_WALLET;
 
 /**
  * @author gaoxinyu
@@ -20,6 +28,9 @@ public class BaseClient {
     private BcosSDK bcosSDK;
     private Client client;
     public static final String PATH = System.getProperty("user.dir") + "/src/main/resources/contract.properties";
+
+    @Autowired
+    private UserWalletMapper userWalletMapper;
 
     @PostConstruct
     public void initialize() {
@@ -45,5 +56,15 @@ public class BaseClient {
         // 获取区块
         BcosBlock block = client.getBlockByNumber(blockNumber, true, false);
         return block.getBlock().getTimestamp();
+    }
+
+    // 加载用户私钥
+    public String loadUserKeyPair() {
+        User user = UserUtil.get();
+        // 获取用户私钥
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .select(USER_WALLET.PRIVATE_KEY)
+                .where(USER_WALLET.USER_ID.eq(user.getId()));
+        return userWalletMapper.selectOneByQuery(queryWrapper).getPrivateKey();
     }
 }

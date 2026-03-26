@@ -43,8 +43,18 @@ request.interceptors.request.use(
     if (code === 200) {
       return { data, message } as ApiResult<any>
     }
+    if (code === 401) {
+      const msg = message
+      localStorage.removeItem('token')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('username')
+      localStorage.removeItem('walletAddress')
+      router.push('/login')
+      ElMessage.error(msg || '未登录或登录已过期，请重新登录')
+      return Promise.reject(new Error(msg || '未登录'))
+    }
     ElMessage.error(message || '请求失败')
-    return new Promise(() => {})
+    return Promise.reject(new Error(message || '请求失败'))
   },
   (error: any) => {
     if (error.response?.status === 401) {
