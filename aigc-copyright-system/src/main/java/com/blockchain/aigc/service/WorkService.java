@@ -14,6 +14,7 @@ import com.blockchain.aigc.mapper.UserMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.mapper.WorkMapper;
 import com.blockchain.aigc.utils.FileHashUtil;
+import com.blockchain.aigc.utils.LogContextUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -135,6 +136,8 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             BeanUtils.copyProperties(work, dto);
             dto.setUserName(currentUser.getUsername());
             dto.setFileUrl(minioService.getFileUrl(objectName));
+
+            LogContextUtil.set(currentUser.getId());
 
             return dto;
         } catch (Exception e) {
@@ -277,6 +280,8 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
 
         work.setStatus(status);
         workMapper.update(work);
+
+        LogContextUtil.set(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -335,7 +340,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
                 .where(WORK.WORK_ID.eq(workId));
         return workMapper.selectOneByQuery(queryWrapper);
     }
-    
+
     public Work getWorkEntityById(Long id) {
         return workMapper.selectOneById(id);
     }

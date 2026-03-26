@@ -1,9 +1,11 @@
 package com.blockchain.aigc.controller;
 
+import com.blockchain.aigc.annotation.Log;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.CopyrightTransferRequest;
 import com.blockchain.aigc.dto.TransferHistoryDTO;
 import com.blockchain.aigc.entity.User;
+import com.blockchain.aigc.enums.OperationTypeEnum;
 import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.service.CopyrightService;
 import com.blockchain.aigc.utils.UserUtil;
@@ -24,6 +26,7 @@ public class CopyrightController {
     /**
      * 版权转让
      */
+    @Log(module = "版权转让", operationType = OperationTypeEnum.CREATE, description = "转让版权", targetType = "work")
     @PostMapping("/transfer")
     public ApiResponse<TransferHistoryDTO> transferCopyright(
             @Valid @RequestBody CopyrightTransferRequest request) {

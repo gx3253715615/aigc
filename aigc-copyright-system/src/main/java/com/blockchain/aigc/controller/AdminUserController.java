@@ -1,8 +1,10 @@
 package com.blockchain.aigc.controller;
 
+import com.blockchain.aigc.annotation.Log;
 import com.blockchain.aigc.dto.AdminUserDTO;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.RegisterRequest;
+import com.blockchain.aigc.enums.OperationTypeEnum;
 import com.blockchain.aigc.enums.UserStatusEnum;
 import com.blockchain.aigc.service.UserService;
 import com.mybatisflex.core.paginate.Page;
@@ -22,6 +24,7 @@ public class AdminUserController {
     private UserService userService;
 
     @PostMapping
+    @Log(module = "用户", operationType = OperationTypeEnum.REGISTER, description = "新增用户", targetType = "user")
     public ApiResponse<Map<String, Object>> createUser(@Valid @RequestBody RegisterRequest request) {
         try {
             Map<String, Object> result = userService.register(request);
@@ -44,6 +47,7 @@ public class AdminUserController {
         }
     }
 
+    @Log(module = "用户", operationType = OperationTypeEnum.UPDATE, description = "更新用户状态", targetType = "user")
     @PutMapping("/{id}/status")
     public ApiResponse<String> updateStatus(@PathVariable Long id, @RequestBody UpdateUserStatusRequest request) {
         try {

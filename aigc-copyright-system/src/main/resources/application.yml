@@ -48,6 +48,7 @@ jwt:
   expiration: 86400000
 
 # 区块链配置
+# http://192.168.133.136:5002/WeBASE-Front/#/home
 
 # 日志配置
 logging:

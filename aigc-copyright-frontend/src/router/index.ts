@@ -66,6 +66,12 @@ const router = createRouter({
       name: 'admin-works',
       component: () => import('@/views/AdminWorksPage.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/logs',
+      name: 'operation-logs',
+      component: () => import('@/views/OperationLogsPage.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

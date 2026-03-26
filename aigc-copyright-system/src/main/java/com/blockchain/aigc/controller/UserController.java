@@ -1,5 +1,6 @@
 package com.blockchain.aigc.controller;
 
+import com.blockchain.aigc.annotation.Log;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.LoginRequest;
 import com.blockchain.aigc.dto.RealnameAuthRequest;
@@ -8,6 +9,7 @@ import com.blockchain.aigc.dto.UserLookupDTO;
 import com.blockchain.aigc.dto.UserProfileDTO;
 import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.UserRealname;
+import com.blockchain.aigc.enums.OperationTypeEnum;
 import com.blockchain.aigc.service.UserService;
 import com.blockchain.aigc.utils.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +23,14 @@ import java.util.Map;
 @RequestMapping("/api/users")
 @CrossOrigin
 public class UserController {
-    
+
     @Autowired
     private UserService userService;
-    
+
     /**
      * 用户注册
      */
+    @Log(module = "用户管理", operationType = OperationTypeEnum.REGISTER, description = "用户注册", targetType = "user")
     @PostMapping("/register")
     public ApiResponse<Map<String, Object>> register(@Valid @RequestBody RegisterRequest request) {
         try {
@@ -37,10 +40,11 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 用户登录
      */
+    @Log(module = "用户管理", operationType = OperationTypeEnum.LOGIN, description = "用户登录", targetType = "user")
     @PostMapping("/login")
     public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         try {
@@ -50,7 +54,7 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 获取用户信息
      */
@@ -63,11 +67,12 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 更新用户信息
      * 注意：auth_status、status、wallet_address三个字段不允许用户更新
      */
+    @Log(module = "用户管理", operationType = OperationTypeEnum.UPDATE, description = "更新用户信息", targetType = "user")
     @PutMapping("/profile")
     public ApiResponse<String> updateProfile(@RequestBody UserProfileDTO request) {
         try {
@@ -78,6 +83,10 @@ public class UserController {
         }
     }
 
+    /**
+     * 上传头像
+     */
+    @Log(module = "用户管理", operationType = OperationTypeEnum.UPDATE, description = "上传头像", targetType = "user")
     @PostMapping("/avatar")
     public ApiResponse<Map<String, Object>> uploadAvatar(@RequestParam("file") MultipartFile file) {
         try {
@@ -87,10 +96,11 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 实名认证
      */
+    @Log(module = "用户管理", operationType = OperationTypeEnum.AUTH, description = "实名认证", targetType = "user")
     @PostMapping("/realname-auth")
     public ApiResponse<String> realnameAuth(@RequestBody RealnameAuthRequest request) {
         try {
@@ -100,7 +110,7 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
-    
+
     /**
      * 获取实名认证信息
      */

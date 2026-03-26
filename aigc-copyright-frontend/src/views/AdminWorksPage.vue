@@ -24,6 +24,13 @@
       <el-table :data="works" v-loading="loading" style="width: 100%">
         <el-table-column prop="workId" label="作品ID" min-width="120" />
         <el-table-column prop="fileName" label="文件名" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="summary" label="摘要" min-width="150">
+          <template #default="{ row }">
+            <el-tooltip :content="row.summary || '无摘要'" placement="top" :disabled="!(row.summary && row.summary.length > 20)">
+              <div class="truncate-text">{{ row.summary || '-' }}</div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="userName" label="上传者" width="120" />
         <el-table-column label="类型" width="100">
           <template #default="{ row }">
@@ -96,12 +103,16 @@
         
         <div class="detail-section">
           <div class="section-title">作品摘要</div>
-          <div class="section-content">{{ selectedWork.summary || '无摘要' }}</div>
+          <el-tooltip :content="selectedWork.summary || '无摘要'" placement="top" :disabled="!(selectedWork.summary && selectedWork.summary.length > 100)">
+            <div class="section-content truncate-block">{{ selectedWork.summary || '无摘要' }}</div>
+          </el-tooltip>
         </div>
 
         <div class="detail-section">
           <div class="section-title">提示词 (Prompt)</div>
-          <div class="section-content prompt-box">{{ selectedWork.prompt || '无提示词' }}</div>
+          <el-tooltip :content="selectedWork.prompt || '无提示词'" placement="top" :disabled="!(selectedWork.prompt && selectedWork.prompt.length > 100)">
+            <div class="section-content prompt-box truncate-block">{{ selectedWork.prompt || '无提示词' }}</div>
+          </el-tooltip>
         </div>
 
         <div class="detail-section" v-if="selectedWork.fileUrl">
@@ -335,6 +346,23 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.6;
   color: #475569;
+}
+
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.truncate-block {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 100px;
+  cursor: pointer;
 }
 
 .prompt-box {

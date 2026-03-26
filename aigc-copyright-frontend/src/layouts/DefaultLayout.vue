@@ -41,6 +41,10 @@
             <el-icon><Checked /></el-icon>
             <span>作品审核</span>
           </el-menu-item>
+          <el-menu-item index="/logs">
+            <el-icon><List /></el-icon>
+            <span>操作日志</span>
+          </el-menu-item>
         </el-menu>
       </el-scrollbar>
 
@@ -112,7 +116,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { HomeFilled, Document, Upload, Refresh, Coin, UserFilled, Lock, ArrowDown, Setting, Checked } from '@element-plus/icons-vue'
+import { HomeFilled, Document, Upload, Refresh, Coin, UserFilled, Lock, ArrowDown, Setting, Checked, List } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import RealnameAuthDialog from '@/components/RealnameAuthDialog.vue'
 import UserProfileDialog from '@/components/UserProfileDialog.vue'

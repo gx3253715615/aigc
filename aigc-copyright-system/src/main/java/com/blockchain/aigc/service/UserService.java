@@ -16,6 +16,7 @@ import com.blockchain.aigc.mapper.UserMapper;
 import com.blockchain.aigc.mapper.UserRealnameMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.utils.JwtUtil;
+import com.blockchain.aigc.utils.LogContextUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -62,7 +63,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private BaseClient baseClient;
 
 
-
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> register(RegisterRequest request) {
         // 检查用户名是否存在
@@ -96,6 +96,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         result.put("username", user.getUsername());
         result.put("walletAddress", null);  // 注册时无钱包地址
 
+        LogContextUtil.set(user.getId());
+
         return result;
     }
 
@@ -125,11 +127,14 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         // 生成token (使用userId)
         String token = jwtUtil.generateToken(user.getId());
 
+
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("userId", user.getId());
         result.put("username", user.getUsername());
         result.put("walletAddress", wallet != null ? wallet.getWalletAddress() : null);
+
+        LogContextUtil.set(user.getId());
 
         return result;
     }
@@ -262,6 +267,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         updateUser.setId(targetUserId);
         updateUser.setStatus(status);
         userMapper.update(updateUser);
+
+        LogContextUtil.set(targetUserId);
     }
 
     public UserLookupDTO lookupByPhoneOrEmail(String keyword) {
@@ -332,6 +339,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         // authStatus、status、walletAddress 不允许用户更新，忽略这些字段
 
         userMapper.update(updateUser);
+
+        LogContextUtil.set(currentUser.getId());
     }
 
     public Map<String, Object> uploadAvatar(MultipartFile file) {
@@ -353,6 +362,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         Map<String, Object> result = new HashMap<>();
         result.put("avatarPath", objectName);
         result.put("avatarUrl", url);
+
+        LogContextUtil.set(currentUser.getId());
+
         return result;
     }
 
@@ -414,6 +426,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         updateUser.setId(currentUser.getId());
         updateUser.setAuthStatus(UserAuthEnum.AUTH);
         userMapper.update(updateUser);
+
+        LogContextUtil.set(userRealname.getId());
     }
 
     public UserRealname getRealnameAuth() {

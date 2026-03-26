@@ -15,6 +15,7 @@ import com.blockchain.aigc.handler.exception.GlobalException;
 import com.blockchain.aigc.mapper.CopyrightTransferMapper;
 import com.blockchain.aigc.mapper.UserWalletMapper;
 import com.blockchain.aigc.mapper.WorkMapper;
+import com.blockchain.aigc.utils.LogContextUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -172,6 +173,8 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         BeanUtils.copyProperties(transfer, dto);
         dto.setFromUserName(fromUser.getUsername());
         dto.setToUserName(toUser.getUsername());
+
+        LogContextUtil.set(Long.valueOf(request.getWorkId()));
 
         return dto;
     }

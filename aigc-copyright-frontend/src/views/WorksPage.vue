@@ -10,6 +10,13 @@
     <el-card class="panel" shadow="never">
       <el-table :data="works" v-loading="loading" style="width: 100%">
         <el-table-column prop="fileName" label="文件名" min-width="220" />
+        <el-table-column prop="summary" label="摘要" min-width="150">
+          <template #default="{ row }">
+            <el-tooltip :content="row.summary || '无摘要'" placement="top" :disabled="!(row.summary && row.summary.length > 20)">
+              <div class="truncate-text">{{ row.summary || '-' }}</div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="fileType" label="类型" width="110" />
         <el-table-column label="作品状态" width="100">
           <template #default="{ row }">
@@ -132,10 +139,14 @@
               <el-descriptions-item label="模型版本">{{ selectedWork.modelVersion || '-' }}</el-descriptions-item>
               <el-descriptions-item label="模型来源">{{ selectedWork.modelSource || '-' }}</el-descriptions-item>
               <el-descriptions-item label="摘要" :span="2">
-                <div class="scroll-box pre">{{ selectedWork.summary || '-' }}</div>
+                <el-tooltip :content="selectedWork.summary || '无摘要'" placement="top" :disabled="!(selectedWork.summary && selectedWork.summary.length > 100)">
+                  <div class="scroll-box pre truncate-block">{{ selectedWork.summary || '-' }}</div>
+                </el-tooltip>
               </el-descriptions-item>
               <el-descriptions-item label="生成提示词" :span="2">
-                <div class="scroll-box pre">{{ selectedWork.prompt || '-' }}</div>
+                <el-tooltip :content="selectedWork.prompt || '无提示词'" placement="top" :disabled="!(selectedWork.prompt && selectedWork.prompt.length > 100)">
+                  <div class="scroll-box pre truncate-block">{{ selectedWork.prompt || '-' }}</div>
+                </el-tooltip>
               </el-descriptions-item>
               <el-descriptions-item label="模型参数" :span="2">
                 <div class="scroll-box">
@@ -534,6 +545,24 @@ onMounted(() => {
   display: flex;
   justify-content: center;
 }
+
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.truncate-block {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 4.8em;
+  cursor: pointer;
+}
+
 .work-detail {
   padding: 10px 0;
 }

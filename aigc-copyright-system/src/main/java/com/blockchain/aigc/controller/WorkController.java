@@ -1,20 +1,22 @@
 package com.blockchain.aigc.controller;
 
+import com.blockchain.aigc.annotation.Log;
 import com.blockchain.aigc.dto.ApiResponse;
 import com.blockchain.aigc.dto.UploadWorkRequest;
 import com.blockchain.aigc.dto.WorkDTO;
 import com.blockchain.aigc.entity.User;
 import com.blockchain.aigc.entity.Work;
 import com.blockchain.aigc.enums.AuditStatusEnum;
+import com.blockchain.aigc.enums.OperationTypeEnum;
 import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.service.UserService;
 import com.blockchain.aigc.service.WorkService;
 import com.blockchain.aigc.service.MinioService;
+import com.blockchain.aigc.utils.LogContextUtil;
 import com.blockchain.aigc.utils.UserUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,8 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.Map;
-
-import static com.blockchain.aigc.entity.table.UserTableDef.USER;
 
 @RestController
 @RequestMapping("/api/works")
@@ -45,6 +45,7 @@ public class WorkController {
      * 上传作品
      */
     @PostMapping("/upload")
+    @Log(module = "作品", operationType = OperationTypeEnum.CREATE, description = "上传作品", targetType = "work")
     public ApiResponse<WorkDTO> uploadWork(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "summary", required = false) String summary,
@@ -138,6 +139,7 @@ public class WorkController {
     }
 
     @PutMapping("/admin/{id}/audit")
+    @Log(module = "作品", operationType = OperationTypeEnum.UPDATE, description = "审核作品", targetType = "work")
     public ApiResponse<String> auditWork(
             @PathVariable Long id,
             @RequestParam AuditStatusEnum status) {
@@ -153,6 +155,7 @@ public class WorkController {
      * 手动确权
      */
     @PostMapping("/{id}/certify")
+    @Log(module = "作品", operationType = OperationTypeEnum.UPDATE, description = "作品确权", targetType = "work")
     public ApiResponse<String> certifyWork(@PathVariable Long id) {
         try {
             // 检查用户认证状态
@@ -167,12 +170,16 @@ public class WorkController {
 
             WorkDTO workDTO = workService.getWorkById(id);
             workService.certifyWork(workDTO.getWorkId());
+
+            LogContextUtil.set(id);
+
             return ApiResponse.success("确权成功", null);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
     }
 
+    @Log(module = "作品", operationType = OperationTypeEnum.DOWNLOAD, description = "下载作品", targetType = "work")
     @GetMapping("/{id}/download")
     public void downloadMyWork(@PathVariable Long id, HttpServletResponse response) {
         try {
@@ -213,6 +220,8 @@ public class WorkController {
                 }
                 out.flush();
             }
+
+            LogContextUtil.set(id);
         } catch (Exception e) {
             try {
                 response.setStatus(500);
@@ -262,6 +271,8 @@ public class WorkController {
                 }
                 out.flush();
             }
+
+            LogContextUtil.set(id);
         } catch (Exception e) {
             try {
                 response.setStatus(500);

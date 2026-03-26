@@ -38,12 +38,14 @@ public class MinioService {
             ensureBucketExists(bucketName);
             
             // 上传文件
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(objectName)
-                    .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
-                    .build());
+            try (InputStream is = file.getInputStream()) {
+                minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .stream(is, file.getSize(), -1)
+                        .contentType(file.getContentType())
+                        .build());
+            }
             
             return objectName;
         } catch (Exception e) {
@@ -54,12 +56,14 @@ public class MinioService {
     public String uploadFile(MultipartFile file, String objectName, String bucket) {
         try {
             ensureBucketExists(bucket);
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(objectName)
-                    .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
-                    .build());
+            try (InputStream is = file.getInputStream()) {
+                minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(objectName)
+                        .stream(is, file.getSize(), -1)
+                        .contentType(file.getContentType())
+                        .build());
+            }
             return objectName;
         } catch (Exception e) {
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
