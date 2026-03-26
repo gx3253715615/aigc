@@ -30,6 +30,13 @@
           <template #default="{ row }">
             <el-button size="small" @click="viewWork(row)">查看</el-button>
             <el-button
+              size="small"
+              @click="downloadWork(row)"
+              :disabled="!row.fileUrl"
+            >
+              下载
+            </el-button>
+            <el-button
               v-if="row.workStatus === 'UPLOADED'"
               size="small"
               type="primary"
@@ -146,6 +153,10 @@
         </el-tabs>
         <el-empty v-else-if="!detailLoading" description="暂无作品详情" />
       </div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button type="primary" :disabled="!selectedWork || !selectedWork.fileUrl" @click="downloadSelectedWork">下载作品</el-button>
+      </template>
     </el-dialog>
 
     <!-- Transfer Dialog -->
@@ -248,6 +259,32 @@ const currentUserId = computed(() => {
 const isSelfRecipient = computed(() => {
   return !!lookupUser.value?.id && lookupUser.value.id === currentUserId.value
 })
+
+import request from '@/utils/request'
+
+const downloadWork = async (work: Work) => {
+  try {
+    const response = (await request.get(`/works/${work.id}/download`, {
+      responseType: 'blob'
+    })) as any
+    const blob = new Blob([response.data])
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = work.fileName || 'work'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (error: any) {
+    ElMessage.error('下载失败：' + (error.message || '网络错误'))
+  }
+}
+
+const downloadSelectedWork = () => {
+  if (!selectedWork.value) return
+  downloadWork(selectedWork.value)
+}
 
 const getStatusType = (status: string) => {
   const types: Record<string, any> = {

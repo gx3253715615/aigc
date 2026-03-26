@@ -156,9 +156,19 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             dto.setUserName(user.getUsername());
         }
 
-        dto.setFileUrl(minioService.getFileUrl(work.getMinioPath()));
+        dto.setFileUrl(minioService.getFileUrl(getObjectNameFromPath(work.getMinioPath())));
 
         return dto;
+    }
+
+    private String getObjectNameFromPath(String path) {
+        if (path == null) {
+            return null;
+        }
+        if (path.contains("/")) {
+            return path.substring(path.indexOf("/") + 1);
+        }
+        return path;
     }
 
     public WorkDTO getWorkByWorkId(String workId) {
@@ -178,7 +188,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             dto.setUserName(user.getUsername());
         }
 
-        dto.setFileUrl(minioService.getFileUrl(work.getMinioPath()));
+        dto.setFileUrl(minioService.getFileUrl(getObjectNameFromPath(work.getMinioPath())));
 
         return dto;
     }
@@ -204,7 +214,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
                 dto.setUserName(user.getUsername());
             }
 
-            dto.setFileUrl(minioService.getFileUrl(work.getMinioPath()));
+            dto.setFileUrl(minioService.getFileUrl(getObjectNameFromPath(work.getMinioPath())));
 
             return dto;
         }).collect(Collectors.toList());
@@ -241,7 +251,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
             if (user != null) {
                 dto.setUserName(user.getUsername());
             }
-            dto.setFileUrl(minioService.getFileUrl(work.getMinioPath()));
+            dto.setFileUrl(minioService.getFileUrl(getObjectNameFromPath(work.getMinioPath())));
             return dto;
         }).collect(Collectors.toList());
 
@@ -324,6 +334,10 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(WORK.WORK_ID.eq(workId));
         return workMapper.selectOneByQuery(queryWrapper);
+    }
+    
+    public Work getWorkEntityById(Long id) {
+        return workMapper.selectOneById(id);
     }
 
     @Transactional(rollbackFor = Exception.class)

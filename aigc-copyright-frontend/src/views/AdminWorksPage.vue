@@ -120,6 +120,10 @@
           </div>
         </div>
       </div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button type="primary" :disabled="!selectedWork || !selectedWork.fileUrl" @click="downloadSelectedWork">下载作品</el-button>
+      </template>
     </el-dialog>
   </DefaultLayout>
 </template>
@@ -186,6 +190,32 @@ const handleAudit = (id: number, status: 'PASS' | 'REJECT') => {
 const viewWork = (work: Work) => {
   selectedWork.value = work
   detailVisible.value = true
+}
+
+import request from '@/utils/request'
+
+const downloadWork = async (work: Work) => {
+  try {
+    const response = (await request.get(`/works/admin/${work.id}/download`, {
+      responseType: 'blob'
+    })) as any
+    const blob = new Blob([response.data])
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = work.fileName || 'work'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (error: any) {
+    ElMessage.error('下载失败：' + (error.message || '网络错误'))
+  }
+}
+
+const downloadSelectedWork = () => {
+  if (!selectedWork.value) return
+  downloadWork(selectedWork.value)
 }
 
 const formatFileType = (fileType: string) => {

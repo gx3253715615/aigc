@@ -39,6 +39,10 @@ request.interceptors.request.use(
 // 响应拦截器
 ;(request.interceptors.response as any).use(
   (response: AxiosResponse<any>) => {
+    // 如果返回的是二进制数据，直接返回响应体
+    if (response.config.responseType === 'blob' || response.data instanceof Blob) {
+      return response
+    }
     const { code, message, data } = response.data || {}
     if (code === 200) {
       return { data, message } as ApiResult<any>
