@@ -115,7 +115,7 @@
               :preview-src-list="[selectedWork.fileUrl]"
             />
             <div v-else class="file-link">
-              <el-link :href="selectedWork.fileUrl" target="_blank" type="primary">点击查看/下载文件</el-link>
+              <el-button type="primary" link @click="downloadSelectedWork">点击下载文件</el-button>
             </div>
           </div>
         </div>

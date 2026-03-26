@@ -119,9 +119,7 @@
                 {{ selectedWork.blockNumber !== undefined && selectedWork.blockNumber !== null ? selectedWork.blockNumber : '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="文件访问链接">
-                <el-link v-if="selectedWork.fileUrl" :href="selectedWork.fileUrl" target="_blank" type="primary">
-                  {{ selectedWork.fileUrl }}
-                </el-link>
+                <el-button v-if="selectedWork.fileUrl" type="primary" link @click="downloadSelectedWork">点击下载文件</el-button>
                 <span v-else>-</span>
               </el-descriptions-item>
             </el-descriptions>
