@@ -81,7 +81,8 @@ public class WorkController {
                     ObjectMapper objectMapper = new ObjectMapper();
                     Map<String, String> modelParams = objectMapper.readValue(
                             modelParamsJson,
-                            new TypeReference<Map<String, String>>() {}
+                            new TypeReference<Map<String, String>>() {
+                            }
                     );
                     request.setModelParams(modelParams);
                 } catch (Exception e) {
@@ -97,12 +98,25 @@ public class WorkController {
     }
 
     /**
-     * 获取作品详情
+     * 获取作品详情，从数据库中获取
      */
     @GetMapping("/{id}")
     public ApiResponse<WorkDTO> getWork(@PathVariable Long id) {
         try {
             WorkDTO work = workService.getWorkById(id);
+            return ApiResponse.success(work);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 获取作品详情，从区块链中获取
+     */
+    @GetMapping("/blockchain/{id}")
+    public ApiResponse<Map<String, Object>> getWorkFromBlockChain(@PathVariable Long id) {
+        try {
+            Map<String, Object> work = workService.getWorkFromBlockChain(id);
             return ApiResponse.success(work);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
@@ -169,7 +183,7 @@ public class WorkController {
             }
 
             WorkDTO workDTO = workService.getWorkById(id);
-            workService.certifyWork(workDTO.getWorkId());
+            workService.certifyWork(workDTO.getWorkId(), workDTO.getFileHash());
 
             LogContextUtil.set(id);
 
@@ -227,7 +241,8 @@ public class WorkController {
                 response.setStatus(500);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"code\":500,\"message\":\"文件下载失败\"}");
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -278,7 +293,8 @@ public class WorkController {
                 response.setStatus(500);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"code\":500,\"message\":\"文件下载失败\"}");
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 }

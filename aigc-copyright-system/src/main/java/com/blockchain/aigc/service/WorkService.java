@@ -1,5 +1,6 @@
 package com.blockchain.aigc.service;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import com.blockchain.aigc.client.BaseClient;
 import com.blockchain.aigc.client.CopyrightCertClient;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,9 +130,6 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
 
             workMapper.insert(work);
 
-            // 注册到区块链
-            copyrightCertClient.registerWork(workId, fileHash, walletAddress);
-
             // 返回
             WorkDTO dto = new WorkDTO();
             BeanUtils.copyProperties(work, dto);
@@ -162,6 +161,20 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         dto.setFileUrl(minioService.getFileUrl(getObjectNameFromPath(work.getMinioPath())));
 
         return dto;
+    }
+
+    public Map<String, Object> getWorkFromBlockChain(Long id) {
+        Work work = workMapper.selectOneById(id);
+        if (work == null) {
+            throw new GlobalException("作品不存在");
+        }
+        Map<String, Object> map = copyrightCertClient.getWork(work.getWorkId());
+        // 时间戳转字符串
+        Long time = Long.parseLong((String) map.get("certifyTime"));
+        String formatTime = LocalDateTimeUtil.format(LocalDateTimeUtil.of(time), "yyyy-MM-dd HH:mm:ss");
+        map.put("certifyTime", formatTime);
+        map.put("workId", work.getWorkId());
+        return map;
     }
 
     private String getObjectNameFromPath(String path) {
@@ -346,7 +359,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void certifyWork(String workId) {
+    public void certifyWork(String workId, String fileHash) {
         User currentUser = UserUtil.get();
         if (currentUser == null) {
             throw new GlobalException(ResultEnum.NO_LOGIN);
@@ -371,7 +384,7 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         }
 
         // 确权作品
-        TransactionReceipt receipt = copyrightCertClient.confirmCopyright(workId);
+        TransactionReceipt receipt = copyrightCertClient.confirmCopyright(workId, fileHash);
 
         if (receipt == null) {
             throw new GlobalException("作品确权失败");
@@ -398,4 +411,6 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         }
         return copyrightCertClient.getWork(workId);
     }
+
+
 }

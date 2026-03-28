@@ -1,17 +1,19 @@
 package com.blockchain.aigc.contract;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.fisco.bcos.sdk.v3.client.Client;
 import org.fisco.bcos.sdk.v3.codec.datatypes.Address;
+import org.fisco.bcos.sdk.v3.codec.datatypes.Event;
 import org.fisco.bcos.sdk.v3.codec.datatypes.Function;
 import org.fisco.bcos.sdk.v3.codec.datatypes.Type;
 import org.fisco.bcos.sdk.v3.codec.datatypes.TypeReference;
 import org.fisco.bcos.sdk.v3.codec.datatypes.Utf8String;
 import org.fisco.bcos.sdk.v3.codec.datatypes.generated.Uint256;
-import org.fisco.bcos.sdk.v3.codec.datatypes.generated.tuples.generated.Tuple1;
+import org.fisco.bcos.sdk.v3.codec.datatypes.generated.tuples.generated.Tuple2;
 import org.fisco.bcos.sdk.v3.codec.datatypes.generated.tuples.generated.Tuple3;
 import org.fisco.bcos.sdk.v3.contract.Contract;
 import org.fisco.bcos.sdk.v3.crypto.CryptoSuite;
@@ -23,15 +25,15 @@ import org.fisco.bcos.sdk.v3.transaction.model.exception.ContractException;
 
 @SuppressWarnings("unchecked")
 public class CopyrightCert extends Contract {
-    public static final String[] BINARY_ARRAY = {"608060405234801561001057600080fd5b5061062d806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063573d21f3146100465780636052d31f146100715780636b18828814610086575b600080fd5b610059610054366004610439565b610099565b60405161006893929190610452565b60405180910390f35b61008461007f3660046104f1565b6101aa565b005b610084610094366004610439565b6102a0565b6000818152602081905260408120600381015460609291829160ff166100f85760405162461bcd60e51b815260206004820152600f60248201526e776f726b206e6f742065786973747360881b60448201526064015b60405180910390fd5b60018101546002820154825483926001600160a01b03169190839061011c906105bc565b80601f0160208091040260200160405190810160405280929190818152602001828054610148906105bc565b80156101955780601f1061016a57610100808354040283529160200191610195565b820191906000526020600020905b81548152906001019060200180831161017857829003601f168201915b50505050509250935093509350509193909250565b60008381526020819052604090206003015460ff16156102025760405162461bcd60e51b8152602060048201526013602482015272776f726b20616c72656164792065786973747360681b60448201526064016100ef565b604080516080810182528381526001600160a01b03831660208083019190915260008284018190526001606084015286815280825292909220815180519293919261025092849201906103a0565b5060208201516001820180546001600160a01b0319166001600160a01b03909216919091179055604082015160028201556060909101516003909101805460ff1916911515919091179055505050565b6000818152602081905260409020600381015460ff166102f45760405162461bcd60e51b815260206004820152600f60248201526e776f726b206e6f742065786973747360881b60448201526064016100ef565b60018101546001600160a01b031633146103505760405162461bcd60e51b815260206004820152601760248201527f6f6e6c7920617574686f722063616e20636f6e6669726d00000000000000000060448201526064016100ef565b6002810154156103965760405162461bcd60e51b8152602060048201526011602482015270185b1c9958591e4818dbdb999a5c9b5959607a1b60448201526064016100ef565b4260029091015550565b8280546103ac906105bc565b90600052602060002090601f0160209004810192826103ce5760008555610414565b82601f106103e757805160ff1916838001178555610414565b82800160010185558215610414579182015b828111156104145782518255916020019190600101906103f9565b50610420929150610424565b5090565b5b808211156104205760008155600101610425565b60006020828403121561044b57600080fd5b5035919050565b606081526000845180606084015260005b818110156104805760208188018101516080868401015201610463565b81811115610492576000608083860101525b506001600160a01b039490941660208301525060408101919091526080601f909201601f19160101919050565b634e487b7160e01b600052604160045260246000fd5b80356001600160a01b03811681146104ec57600080fd5b919050565b60008060006060848603121561050657600080fd5b83359250602084013567ffffffffffffffff8082111561052557600080fd5b818601915086601f83011261053957600080fd5b81358181111561054b5761054b6104bf565b604051601f8201601f19908116603f01168101908382118183101715610573576105736104bf565b8160405282815289602084870101111561058c57600080fd5b8260208601602083013760006020848301015280965050505050506105b3604085016104d5565b90509250925092565b600181811c908216806105d057607f821691505b602082108114156105f157634e487b7160e01b600052602260045260246000fd5b5091905056fea264697066735822122029df4482102a61a2004cb011960f3426e33093d77cf0c9dad4cdb1cea7fbc21564736f6c634300080b0033"};
+    public static final String[] BINARY_ARRAY = {"608060405234801561001057600080fd5b50610755806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063573d21f31461003b578063f6756f951461011c575b600080fd5b6100676004803603602081101561005157600080fd5b810190808035906020019092919050505061019f565b60405180806020018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001838152602001828103825285818151815260200191508051906020019080838360005b838110156100df5780820151818401526020810190506100c4565b50505050905090810190601f16801561010c5780820380516001836020036101000a031916815260200191505b5094505050505060405180910390f35b61019d6004803603604081101561013257600080fd5b81019080803590602001909291908035906020019064010000000081111561015957600080fd5b82018360208201111561016b57600080fd5b8035906020019184600183028401116401000000008311171561018d57600080fd5b909192939192939050505061037c565b005b60606000806101ac61063a565b600080868152602001908152602001600020604051806080016040529081600082018054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102625780601f1061023757610100808354040283529160200191610262565b820191906000526020600020905b81548152906001019060200180831161024557829003601f168201915b505050505081526020016001820160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001600282015481526020016003820160009054906101000a900460ff1615151515815250509050806060015161035f576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252600f8152602001807f776f726b206e6f7420657869737473000000000000000000000000000000000081525060200191505060405180910390fd5b806000015181602001518260400151935093509350509193909250565b60008084815260200190815260200160002060030160009054906101000a900460ff1615610412576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260138152602001807f776f726b20616c7265616479206578697374730000000000000000000000000081525060200191505060405180910390fd5b6000828290501161048b576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252600c8152602001807f696e76616c69642068617368000000000000000000000000000000000000000081525060200191505060405180910390fd5b6000429050604051806080016040528084848080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505081526020013373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200160011515815250600080868152602001908152602001600020600082015181600001908051906020019061053c92919061067a565b5060208201518160010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506040820151816002015560608201518160030160006101000a81548160ff0219169083151502179055509050503373ffffffffffffffffffffffffffffffffffffffff16847ff3c5c61902011292eb2bc23c25f1e3504d8b7f1c653176ea7dd28f7e8347ef9e85858560405180806020018381526020018281038252858582818152602001925080828437600081840152601f19601f82011690508083019250505094505050505060405180910390a350505050565b604051806080016040528060608152602001600073ffffffffffffffffffffffffffffffffffffffff168152602001600081526020016000151581525090565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106106bb57805160ff19168380011785556106e9565b828001600101855582156106e9579182015b828111156106e85782518255916020019190600101906106cd565b5b5090506106f691906106fa565b5090565b61071c91905b80821115610718576000816000905550600101610700565b5090565b9056fea26469706673582212203f1478bb82c373ec9427c0fa6512bea89b0267de8f657e58be61941ca2ca333f64736f6c634300060a0033"};
 
     public static final String BINARY = org.fisco.bcos.sdk.v3.utils.StringUtils.joinAll("", BINARY_ARRAY);
 
-    public static final String[] SM_BINARY_ARRAY = {"608060405234801561001057600080fd5b50610632806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80631f3f4dd214610046578063b0517bf41461005b578063e25601e11461006e575b600080fd5b61005961005436600461043e565b610099565b005b610059610069366004610489565b6101a1565b61008161007c36600461043e565b610298565b60405161009093929190610554565b60405180910390f35b6000818152602081905260409020600381015460ff166100f357604051636381e58960e11b815260206004820152600f60248201526e776f726b206e6f742065786973747360881b60448201526064015b60405180910390fd5b60018101546001600160a01b0316331461015057604051636381e58960e11b815260206004820152601760248201527f6f6e6c7920617574686f722063616e20636f6e6669726d00000000000000000060448201526064016100ea565b60028101541561019757604051636381e58960e11b8152602060048201526011602482015270185b1c9958591e4818dbdb999a5c9b5959607a1b60448201526064016100ea565b4260029091015550565b60008381526020819052604090206003015460ff16156101fa57604051636381e58960e11b8152602060048201526013602482015272776f726b20616c72656164792065786973747360681b60448201526064016100ea565b604080516080810182528381526001600160a01b03831660208083019190915260008284018190526001606084015286815280825292909220815180519293919261024892849201906103a5565b5060208201516001820180546001600160a01b0319166001600160a01b03909216919091179055604082015160028201556060909101516003909101805460ff1916911515919091179055505050565b6000818152602081905260408120600381015460609291829160ff166102f357604051636381e58960e11b815260206004820152600f60248201526e776f726b206e6f742065786973747360881b60448201526064016100ea565b60018101546002820154825483926001600160a01b031691908390610317906105c1565b80601f0160208091040260200160405190810160405280929190818152602001828054610343906105c1565b80156103905780601f1061036557610100808354040283529160200191610390565b820191906000526020600020905b81548152906001019060200180831161037357829003601f168201915b50505050509250935093509350509193909250565b8280546103b1906105c1565b90600052602060002090601f0160209004810192826103d35760008555610419565b82601f106103ec57805160ff1916838001178555610419565b82800160010185558215610419579182015b828111156104195782518255916020019190600101906103fe565b50610425929150610429565b5090565b5b80821115610425576000815560010161042a565b60006020828403121561045057600080fd5b5035919050565b63b95aa35560e01b600052604160045260246000fd5b80356001600160a01b038116811461048457600080fd5b919050565b60008060006060848603121561049e57600080fd5b83359250602084013567ffffffffffffffff808211156104bd57600080fd5b818601915086601f8301126104d157600080fd5b8135818111156104e3576104e3610457565b604051601f8201601f19908116603f0116810190838211818310171561050b5761050b610457565b8160405282815289602084870101111561052457600080fd5b82602086016020830137600060208483010152809650505050505061054b6040850161046d565b90509250925092565b606081526000845180606084015260005b818110156105825760208188018101516080868401015201610565565b81811115610594576000608083860101525b506001600160a01b039490941660208301525060408101919091526080601f909201601f19160101919050565b600181811c908216806105d557607f821691505b602082108114156105f65763b95aa35560e01b600052602260045260246000fd5b5091905056fea2646970667358221220f5ee5940a247e6b823e19ea6b3879e5e8a18b1437487c79392d53c575378d90b64736f6c634300080b0033"};
+    public static final String[] SM_BINARY_ARRAY = {"608060405234801561001057600080fd5b50610755806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063573d21f31461003b578063f6756f951461011c575b600080fd5b6100676004803603602081101561005157600080fd5b810190808035906020019092919050505061019f565b60405180806020018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001838152602001828103825285818151815260200191508051906020019080838360005b838110156100df5780820151818401526020810190506100c4565b50505050905090810190601f16801561010c5780820380516001836020036101000a031916815260200191505b5094505050505060405180910390f35b61019d6004803603604081101561013257600080fd5b81019080803590602001909291908035906020019064010000000081111561015957600080fd5b82018360208201111561016b57600080fd5b8035906020019184600183028401116401000000008311171561018d57600080fd5b909192939192939050505061037c565b005b60606000806101ac61063a565b600080868152602001908152602001600020604051806080016040529081600082018054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156102625780601f1061023757610100808354040283529160200191610262565b820191906000526020600020905b81548152906001019060200180831161024557829003601f168201915b505050505081526020016001820160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001600282015481526020016003820160009054906101000a900460ff1615151515815250509050806060015161035f576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252600f8152602001807f776f726b206e6f7420657869737473000000000000000000000000000000000081525060200191505060405180910390fd5b806000015181602001518260400151935093509350509193909250565b60008084815260200190815260200160002060030160009054906101000a900460ff1615610412576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260138152602001807f776f726b20616c7265616479206578697374730000000000000000000000000081525060200191505060405180910390fd5b6000828290501161048b576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252600c8152602001807f696e76616c69642068617368000000000000000000000000000000000000000081525060200191505060405180910390fd5b6000429050604051806080016040528084848080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505081526020013373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200160011515815250600080868152602001908152602001600020600082015181600001908051906020019061053c92919061067a565b5060208201518160010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506040820151816002015560608201518160030160006101000a81548160ff0219169083151502179055509050503373ffffffffffffffffffffffffffffffffffffffff16847ff3c5c61902011292eb2bc23c25f1e3504d8b7f1c653176ea7dd28f7e8347ef9e85858560405180806020018381526020018281038252858582818152602001925080828437600081840152601f19601f82011690508083019250505094505050505060405180910390a350505050565b604051806080016040528060608152602001600073ffffffffffffffffffffffffffffffffffffffff168152602001600081526020016000151581525090565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106106bb57805160ff19168380011785556106e9565b828001600101855582156106e9579182015b828111156106e85782518255916020019190600101906106cd565b5b5090506106f691906106fa565b5090565b61071c91905b80821115610718576000816000905550600101610700565b5090565b9056fea26469706673582212203f1478bb82c373ec9427c0fa6512bea89b0267de8f657e58be61941ca2ca333f64736f6c634300060a0033"};
 
     public static final String SM_BINARY = org.fisco.bcos.sdk.v3.utils.StringUtils.joinAll("", SM_BINARY_ARRAY);
 
-    public static final String[] ABI_ARRAY = {"[{\"conflictFields\":[{\"kind\":3,\"slot\":0,\"value\":[0]}],\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"workId\",\"type\":\"uint256\"}],\"name\":\"confirmCopyright\",\"outputs\":[],\"selector\":[1796768392,524242386],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"conflictFields\":[{\"kind\":3,\"slot\":0,\"value\":[0]}],\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"workId\",\"type\":\"uint256\"}],\"name\":\"getWork\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"fileHash\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"authorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"certifyTime\",\"type\":\"uint256\"}],\"selector\":[1463624179,3797287393],\"stateMutability\":\"view\",\"type\":\"function\"},{\"conflictFields\":[{\"kind\":3,\"slot\":0,\"value\":[0]}],\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"workId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"fileHash\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"author\",\"type\":\"address\"}],\"name\":\"registerWork\",\"outputs\":[],\"selector\":[1616040735,2958130164],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"};
+    public static final String[] ABI_ARRAY = {"[{\"name\":\"CopyrightConfirmed\",\"type\":\"event\",\"constant\":false,\"payable\":false,\"anonymous\":false,\"stateMutability\":null,\"conflictFields\":[],\"inputs\":[{\"name\":\"workId\",\"type\":\"uint256\",\"internalType\":\"uint256\",\"indexed\":true,\"components\":[],\"dynamic\":false,\"typeAsString\":\"uint256\"},{\"name\":\"fileHash\",\"type\":\"string\",\"internalType\":\"string\",\"indexed\":false,\"components\":[],\"dynamic\":true,\"typeAsString\":\"string\"},{\"name\":\"author\",\"type\":\"address\",\"internalType\":\"address\",\"indexed\":true,\"components\":[],\"dynamic\":false,\"typeAsString\":\"address\"},{\"name\":\"certifyTime\",\"type\":\"uint256\",\"internalType\":\"uint256\",\"indexed\":false,\"components\":[],\"dynamic\":false,\"typeAsString\":\"uint256\"}],\"outputs\":[],\"selector\":[],\"methodSignatureAsString\":\"CopyrightConfirmed(uint256,string,address,uint256)\"},{\"name\":\"confirmCopyright\",\"type\":\"function\",\"constant\":false,\"payable\":false,\"anonymous\":false,\"stateMutability\":\"nonpayable\",\"conflictFields\":[],\"inputs\":[{\"name\":\"workId\",\"type\":\"uint256\",\"internalType\":\"uint256\",\"indexed\":false,\"components\":[],\"dynamic\":false,\"typeAsString\":\"uint256\"},{\"name\":\"fileHash\",\"type\":\"string\",\"internalType\":\"string\",\"indexed\":false,\"components\":[],\"dynamic\":true,\"typeAsString\":\"string\"}],\"outputs\":[],\"selector\":[],\"methodSignatureAsString\":\"confirmCopyright(uint256,string)\"},{\"name\":\"getWork\",\"type\":\"function\",\"constant\":true,\"payable\":false,\"anonymous\":false,\"stateMutability\":\"view\",\"conflictFields\":[],\"inputs\":[{\"name\":\"workId\",\"type\":\"uint256\",\"internalType\":\"uint256\",\"indexed\":false,\"components\":[],\"dynamic\":false,\"typeAsString\":\"uint256\"}],\"outputs\":[{\"name\":\"fileHash\",\"type\":\"string\",\"internalType\":\"string\",\"indexed\":false,\"components\":[],\"dynamic\":true,\"typeAsString\":\"string\"},{\"name\":\"authorAddress\",\"type\":\"address\",\"internalType\":\"address\",\"indexed\":false,\"components\":[],\"dynamic\":false,\"typeAsString\":\"address\"},{\"name\":\"certifyTime\",\"type\":\"uint256\",\"internalType\":\"uint256\",\"indexed\":false,\"components\":[],\"dynamic\":false,\"typeAsString\":\"uint256\"}],\"selector\":[],\"methodSignatureAsString\":\"getWork(uint256)\"}]"};
 
     public static final String ABI = org.fisco.bcos.sdk.v3.utils.StringUtils.joinAll("", ABI_ARRAY);
 
@@ -39,7 +41,9 @@ public class CopyrightCert extends Contract {
 
     public static final String FUNC_GETWORK = "getWork";
 
-    public static final String FUNC_REGISTERWORK = "registerWork";
+    public static final Event COPYRIGHTCONFIRMED_EVENT = new Event("CopyrightConfirmed",
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>(true) {}, new TypeReference<Utf8String>() {}, new TypeReference<Address>(true) {}, new TypeReference<Uint256>() {}));
+    ;
 
     protected CopyrightCert(String contractAddress, Client client, CryptoKeyPair credential) {
         super(getBinary(client.getCryptoSuite()), contractAddress, client, credential);
@@ -53,47 +57,61 @@ public class CopyrightCert extends Contract {
         return ABI;
     }
 
-    public TransactionReceipt confirmCopyright(BigInteger workId) {
+    public List<CopyrightConfirmedEventResponse> getCopyrightConfirmedEvents(
+            TransactionReceipt transactionReceipt) {
+        List<EventValuesWithLog> valueList = extractEventParametersWithLog(COPYRIGHTCONFIRMED_EVENT, transactionReceipt);
+        ArrayList<CopyrightConfirmedEventResponse> responses = new ArrayList<CopyrightConfirmedEventResponse>(valueList.size());
+        for (EventValuesWithLog eventValues : valueList) {
+            CopyrightConfirmedEventResponse typedResponse = new CopyrightConfirmedEventResponse();
+            typedResponse.log = eventValues.getLog();
+            typedResponse.workId = (BigInteger) eventValues.getIndexedValues().get(0).getValue();
+            typedResponse.author = (String) eventValues.getIndexedValues().get(1).getValue();
+            typedResponse.fileHash = (String) eventValues.getNonIndexedValues().get(0).getValue();
+            typedResponse.certifyTime = (BigInteger) eventValues.getNonIndexedValues().get(1).getValue();
+            responses.add(typedResponse);
+        }
+        return responses;
+    }
+
+    public TransactionReceipt confirmCopyright(BigInteger workId, String fileHash) {
         final Function function = new Function(
                 FUNC_CONFIRMCOPYRIGHT,
-                Arrays.<Type>asList(new Uint256(workId)),
-                Collections.<TypeReference<?>>emptyList(), 4);
+                Arrays.<Type>asList(new Uint256(workId),
+                new Utf8String(fileHash)),
+                Collections.<TypeReference<?>>emptyList(), 0);
         return executeTransaction(function);
     }
 
-    public Function getMethodConfirmCopyrightRawFunction(BigInteger workId) throws
-            ContractException {
-        final Function function = new Function(FUNC_CONFIRMCOPYRIGHT,
-                Arrays.<Type>asList(new Uint256(workId)),
-                Arrays.<TypeReference<?>>asList());
-        return function;
-    }
-
-    public String getSignedTransactionForConfirmCopyright(BigInteger workId) {
+    public String getSignedTransactionForConfirmCopyright(BigInteger workId, String fileHash) {
         final Function function = new Function(
                 FUNC_CONFIRMCOPYRIGHT,
-                Arrays.<Type>asList(new Uint256(workId)),
-                Collections.<TypeReference<?>>emptyList(), 4);
+                Arrays.<Type>asList(new Uint256(workId),
+                new Utf8String(fileHash)),
+                Collections.<TypeReference<?>>emptyList(), 0);
         return createSignedTransaction(function);
     }
 
-    public String confirmCopyright(BigInteger workId, TransactionCallback callback) {
+    public String confirmCopyright(BigInteger workId, String fileHash,
+            TransactionCallback callback) {
         final Function function = new Function(
                 FUNC_CONFIRMCOPYRIGHT,
-                Arrays.<Type>asList(new Uint256(workId)),
-                Collections.<TypeReference<?>>emptyList(), 4);
+                Arrays.<Type>asList(new Uint256(workId),
+                new Utf8String(fileHash)),
+                Collections.<TypeReference<?>>emptyList(), 0);
         return asyncExecuteTransaction(function, callback);
     }
 
-    public Tuple1<BigInteger> getConfirmCopyrightInput(TransactionReceipt transactionReceipt) {
+    public Tuple2<BigInteger, String> getConfirmCopyrightInput(
+            TransactionReceipt transactionReceipt) {
         String data = transactionReceipt.getInput().substring(10);
         final Function function = new Function(FUNC_CONFIRMCOPYRIGHT,
                 Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}, new TypeReference<Utf8String>() {}));
         List<Type> results = this.functionReturnDecoder.decode(data, function.getOutputParameters());
-        return new Tuple1<BigInteger>(
+        return new Tuple2<BigInteger, String>(
 
-                (BigInteger) results.get(0).getValue()
+                (BigInteger) results.get(0).getValue(),
+                (String) results.get(1).getValue()
                 );
     }
 
@@ -108,70 +126,6 @@ public class CopyrightCert extends Contract {
                 (BigInteger) results.get(2).getValue());
     }
 
-    public Function getMethodGetWorkRawFunction(BigInteger workId) throws ContractException {
-        final Function function = new Function(FUNC_GETWORK,
-                Arrays.<Type>asList(new Uint256(workId)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Utf8String>() {}, new TypeReference<Address>() {}, new TypeReference<Uint256>() {}));
-        return function;
-    }
-
-    public TransactionReceipt registerWork(BigInteger workId, String fileHash, String author) {
-        final Function function = new Function(
-                FUNC_REGISTERWORK,
-                Arrays.<Type>asList(new Uint256(workId),
-                new Utf8String(fileHash),
-                new Address(author)),
-                Collections.<TypeReference<?>>emptyList(), 4);
-        return executeTransaction(function);
-    }
-
-    public Function getMethodRegisterWorkRawFunction(BigInteger workId, String fileHash,
-            String author) throws ContractException {
-        final Function function = new Function(FUNC_REGISTERWORK,
-                Arrays.<Type>asList(new Uint256(workId),
-                new Utf8String(fileHash),
-                new Address(author)),
-                Arrays.<TypeReference<?>>asList());
-        return function;
-    }
-
-    public String getSignedTransactionForRegisterWork(BigInteger workId, String fileHash,
-            String author) {
-        final Function function = new Function(
-                FUNC_REGISTERWORK,
-                Arrays.<Type>asList(new Uint256(workId),
-                new Utf8String(fileHash),
-                new Address(author)),
-                Collections.<TypeReference<?>>emptyList(), 4);
-        return createSignedTransaction(function);
-    }
-
-    public String registerWork(BigInteger workId, String fileHash, String author,
-            TransactionCallback callback) {
-        final Function function = new Function(
-                FUNC_REGISTERWORK,
-                Arrays.<Type>asList(new Uint256(workId),
-                new Utf8String(fileHash),
-                new Address(author)),
-                Collections.<TypeReference<?>>emptyList(), 4);
-        return asyncExecuteTransaction(function, callback);
-    }
-
-    public Tuple3<BigInteger, String, String> getRegisterWorkInput(
-            TransactionReceipt transactionReceipt) {
-        String data = transactionReceipt.getInput().substring(10);
-        final Function function = new Function(FUNC_REGISTERWORK,
-                Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}, new TypeReference<Utf8String>() {}, new TypeReference<Address>() {}));
-        List<Type> results = this.functionReturnDecoder.decode(data, function.getOutputParameters());
-        return new Tuple3<BigInteger, String, String>(
-
-                (BigInteger) results.get(0).getValue(),
-                (String) results.get(1).getValue(),
-                (String) results.get(2).getValue()
-                );
-    }
-
     public static CopyrightCert load(String contractAddress, Client client,
             CryptoKeyPair credential) {
         return new CopyrightCert(contractAddress, client, credential);
@@ -180,5 +134,17 @@ public class CopyrightCert extends Contract {
     public static CopyrightCert deploy(Client client, CryptoKeyPair credential) throws
             ContractException {
         return deploy(CopyrightCert.class, client, credential, getBinary(client.getCryptoSuite()), getABI(), null, null);
+    }
+
+    public static class CopyrightConfirmedEventResponse {
+        public TransactionReceipt.Logs log;
+
+        public BigInteger workId;
+
+        public String author;
+
+        public String fileHash;
+
+        public BigInteger certifyTime;
     }
 }

@@ -18,6 +18,7 @@ import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
 import org.fisco.bcos.sdk.v3.model.TransactionReceipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.ClassPathResource;
@@ -38,6 +39,9 @@ public class CopyrightCertClient {
     private BcosSDK bcosSDK;
     private Client client;
     private CryptoKeyPair cryptoKeyPair;
+
+    @Autowired
+    private BaseClient baseClient;
 
     @PostConstruct
     public void init() throws Exception {
@@ -111,25 +115,13 @@ public class CopyrightCertClient {
         return contractAddress;
     }
 
-    // 链上注册作品
-    public void registerWork(String workId, String fileHash, String author) {
-        try {
-            String contractAddress = loadCopyrightCertAddr();
-            CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, cryptoKeyPair);
-            // 获取链上信息
-            TransactionReceipt receipt = copyrightCert.registerWork(new BigInteger(workId), fileHash, author);
-        } catch (Exception e) {
-            logger.error(" registerWork exception, error message is {}", e.getMessage());
-        }
-    }
-
     // 链上确权作品
-    public TransactionReceipt confirmCopyright(String workId) {
+    public TransactionReceipt confirmCopyright(String workId, String fileHash) {
         try {
             String contractAddress = loadCopyrightCertAddr();
-            CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, cryptoKeyPair);
+            CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
-            TransactionReceipt receipt = copyrightCert.confirmCopyright(new BigInteger(workId));
+            TransactionReceipt receipt = copyrightCert.confirmCopyright(new BigInteger(workId), fileHash);
             return receipt;
         } catch (Exception e) {
             logger.error(" registerWork exception, error message is {}", e.getMessage());
@@ -141,7 +133,7 @@ public class CopyrightCertClient {
     public Map<String, Object> getWork(String workId) {
         try {
             String contractAddress = loadCopyrightCertAddr();
-            CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, cryptoKeyPair);
+            CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
             Tuple3<String, String, BigInteger> res = copyrightCert.getWork(new BigInteger(workId));
             Map<String, Object> map = new HashMap<>();
@@ -153,5 +145,11 @@ public class CopyrightCertClient {
             logger.error(" registerWork exception, error message is {}", e.getMessage());
         }
         return null;
+    }
+
+    private CryptoKeyPair getUserCryptoKeyPair() {
+        String pk = baseClient.loadUserKeyPair();
+        // 线程安全
+        return client.getCryptoSuite().getKeyPairFactory().createKeyPair(pk);
     }
 }

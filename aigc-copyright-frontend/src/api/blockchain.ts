@@ -19,3 +19,14 @@ export const verifyCopyright = (workId: string, fileHash: string) => {
 export const getWorkTransferHistory = (workId: string) => {
   return request.get<any[]>(`/blockchain/transfer-history/${workId}`)
 }
+
+export interface BlockchainWorkInfo {
+  workId: string
+  fileHash: string
+  author: string
+  certifyTime: string | number
+}
+
+export const getWorkFromBlockchain = (id: string | number) => {
+  return request.get<BlockchainWorkInfo>(`/works/blockchain/${id}`)
+}

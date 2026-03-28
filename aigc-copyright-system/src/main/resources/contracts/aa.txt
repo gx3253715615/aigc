@@ -9,3 +9,6 @@ bash contract2java.sh solidity -s contracts/solidity/Asset.sol -p org.fisco.bcos
 bash contract2java.sh solidity -s contracts/code/AddressAction.sol -p com.blockchain.aigc
 bash contract2java.sh solidity -s contracts/code/CopyrightCert.sol -p com.blockchain.aigc
 bash contract2java.sh solidity -s contracts/code/CopyrightTransfer.sol -p com.blockchain.aigc
+
+
+删除合约中的注册，防止垃圾数据上链
