@@ -17,7 +17,7 @@ export interface Work {
   workStatus: 'INIT' | 'UPLOADED' | 'CERTIFIED' | 'OFFLINE' | 'TRANSFERRED'
   status: 'PENDING' | 'PASS' | 'REJECT'
   rightType: 'RIGHT_OWNERSHIP' | 'RIGHT_USAGE'
-  licenseType: 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE'
+  licenseType: 'NONE' | 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE'
   chainTxHash?: string
   blockNumber?: number
   fileUrl?: string
@@ -47,8 +47,8 @@ export interface CopyrightTransfer {
   toAddress: string
   transferType: 'FULL_TRANSFER' | 'LICENSE_GRANT'
   currentRightType: string
-  licenseType?: 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE'
-  effectiveTime?: string
+  licenseType?: 'NONE' | 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE'
+  tradeDesc?: string
   expireTime?: string
   chainTxHash?: string
   blockNumber?: number

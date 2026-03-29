@@ -114,9 +114,9 @@ public class WorkController {
      * 获取作品详情，从区块链中获取
      */
     @GetMapping("/blockchain/{id}")
-    public ApiResponse<Map<String, Object>> getWorkFromBlockChain(@PathVariable Long id) {
+    public ApiResponse<Map<String, Object>> getWorkFromBlockChain(@PathVariable("id") String workId) {
         try {
-            Map<String, Object> work = workService.getWorkFromBlockChain(id);
+            Map<String, Object> work = workService.getWorkFromBlockChain(workId);
             return ApiResponse.success(work);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());

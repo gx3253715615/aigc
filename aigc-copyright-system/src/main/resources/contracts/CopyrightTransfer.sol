@@ -1,16 +1,27 @@
+//SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.10 <0.8.20;
 
-/**
- * @title CopyrightTransfer
- * @dev 版权转让与授权合约（行为驱动模型）
- */
+interface IWork {
+    function updateOwner(uint256 workId, address newOwner) external;
+
+    function getWork(uint256 workId) external view returns (
+        string memory,
+        address,
+        address,
+        uint256
+    );
+}
+
 contract CopyrightTransfer {
 
-    enum RightType {
-        RIGHT_OWNERSHIP,
-        RIGHT_USAGE
+    enum LicenseType {
+        NONE,
+        PERSONAL,
+        COMMERCIAL,
+        EXCLUSIVE
     }
 
+    // 0 1 2
     enum TransferType {
         FULL_TRANSFER,     // 所有权转让
         LICENSE_GRANT,     // 授权
@@ -24,6 +35,10 @@ contract CopyrightTransfer {
         address from;
         address to;
         TransferType transferType;
+        LicenseType licenseType;
+        uint256 effectiveTime;
+        uint256 expireTime;
+        uint256 amount; // 单位 分
         uint256 timestamp;
     }
 
@@ -33,41 +48,98 @@ contract CopyrightTransfer {
     // workId => transferIds
     mapping(uint256 => uint256[]) private workTransfers;
 
+    address public workContract;
+
+    event TransferCreated(
+        uint256 indexed transferId,
+        uint256 indexed workId,
+        address indexed from,
+        address to,
+        string fileHash,
+        TransferType transferType,
+        LicenseType licenseType,
+        uint256 effectiveTime,
+        uint256 expireTime,
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    constructor(address _workContract) public {
+        workContract = _workContract;
+    }
+
     /**
-     * @dev 创建转让 / 授权记录
+     * 创建转让
      */
     function createTransfer(
         uint256 transferId,
         uint256 workId,
         string memory fileHash,
         address to,
-        TransferType transferType
+        TransferType transferType,
+        LicenseType licenseType,
+        uint256 effectiveTime,
+        uint256 expireTime,
+        uint256 amount
     ) public {
 
         require(transfers[transferId].timestamp == 0, "transfer exists");
+        require(to != address(0), "invalid to address");
 
-        address from = getCurrentOwner(workId);
+        require(amount >= 0, "invalid amount");
 
-        // 首次转让，from 允许为 0x0（初始确权）
-        if (from != address(0)) {
-            require(msg.sender == from, "only owner can transfer");
+        // FULL_TRANSFER 不允许带 licenseType
+        if (transferType == TransferType.FULL_TRANSFER) {
+            require(licenseType == LicenseType.NONE, "full transfer no license");
         }
+        // 授权必须带 licenseType
+        if (transferType == TransferType.LICENSE_GRANT) {
+            require(licenseType != LicenseType.NONE, "license required");
+            require(effectiveTime > 0 && expireTime > effectiveTime, "invalid time");
+        }
+
+        (,,address owner,) = IWork(workContract).getWork(workId);
+
+        require(msg.sender == owner, "only owner can transfer");
 
         transfers[transferId] = Transfer({
             transferId: transferId,
             workId: workId,
             fileHash: fileHash,
-            from: from,
+            from: owner,
             to: to,
             transferType: transferType,
+            licenseType: licenseType,
+            effectiveTime: effectiveTime,
+            expireTime: expireTime,
+            amount: amount,
             timestamp: block.timestamp
         });
 
+
         workTransfers[workId].push(transferId);
+
+        if (transferType == TransferType.FULL_TRANSFER) {
+            IWork(workContract).updateOwner(workId, to);
+        }
+
+        emit TransferCreated(
+            transferId,
+            workId,
+            owner,
+            to,
+            fileHash,
+            transferType,
+            licenseType,
+            effectiveTime,
+            expireTime,
+            amount,
+            block.timestamp
+        );
     }
 
     /**
-     * @dev 查询转让详情
+     * 查询转让详情
      */
     function getTransfer(uint256 transferId)
     public
@@ -78,6 +150,10 @@ contract CopyrightTransfer {
         address from,
         address to,
         TransferType transferType,
+        LicenseType licenseType,
+        uint256 effectiveTime,
+        uint256 expireTime,
+        uint256 amount,
         uint256 timestamp
     )
     {
@@ -90,12 +166,16 @@ contract CopyrightTransfer {
             t.from,
             t.to,
             t.transferType,
+            t.licenseType,
+            t.effectiveTime,
+            t.expireTime,
+            t.amount,
             t.timestamp
         );
     }
 
     /**
-     * @dev 查询作品转让历史
+     * 查询作品转让历史
      */
     function getWorkTransfers(uint256 workId)
     public
@@ -103,52 +183,5 @@ contract CopyrightTransfer {
     returns (uint256[] memory)
     {
         return workTransfers[workId];
-    }
-
-    /**
-     * @dev 查询当前所有者（推导）
-     */
-    function getCurrentOwner(uint256 workId)
-    public
-    view
-    returns (address)
-    {
-        uint256[] memory ids = workTransfers[workId];
-
-        if (ids.length == 0) {
-            return address(0);
-        }
-
-        for (uint256 i = ids.length; i > 0; i--) {
-            Transfer storage t = transfers[ids[i - 1]];
-            if (t.transferType == TransferType.FULL_TRANSFER) {
-                return t.to;
-            }
-        }
-
-        return address(0);
-    }
-
-    /**
-     * @dev 查询当前权利类型（推导）
-     */
-    function getCurrentRightType(uint256 workId)
-    public
-    view
-    returns (RightType)
-    {
-        uint256[] memory ids = workTransfers[workId];
-
-        if (ids.length == 0) {
-            return RightType.RIGHT_OWNERSHIP;
-        }
-
-        Transfer storage t = transfers[ids[ids.length - 1]];
-
-        if (t.transferType == TransferType.LICENSE_GRANT) {
-            return RightType.RIGHT_USAGE;
-        }
-
-        return RightType.RIGHT_OWNERSHIP;
     }
 }

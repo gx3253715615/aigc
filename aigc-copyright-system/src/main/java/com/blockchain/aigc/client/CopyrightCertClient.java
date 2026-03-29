@@ -14,6 +14,7 @@ import org.checkerframework.checker.units.qual.C;
 import org.fisco.bcos.sdk.v3.BcosSDK;
 import org.fisco.bcos.sdk.v3.client.Client;
 import org.fisco.bcos.sdk.v3.codec.datatypes.generated.tuples.generated.Tuple3;
+import org.fisco.bcos.sdk.v3.codec.datatypes.generated.tuples.generated.Tuple4;
 import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
 import org.fisco.bcos.sdk.v3.model.TransactionReceipt;
 import org.slf4j.Logger;
@@ -135,11 +136,12 @@ public class CopyrightCertClient {
             String contractAddress = loadCopyrightCertAddr();
             CopyrightCert copyrightCert = CopyrightCert.load(contractAddress, client, getUserCryptoKeyPair());
             // 获取链上信息
-            Tuple3<String, String, BigInteger> res = copyrightCert.getWork(new BigInteger(workId));
+            Tuple4<String, String, String, BigInteger> res = copyrightCert.getWork(new BigInteger(workId));
             Map<String, Object> map = new HashMap<>();
             map.put("fileHash", res.getValue1());
             map.put("author", res.getValue2());
-            map.put("certifyTime", res.getValue3().toString());
+            map.put("owner", res.getValue3());
+            map.put("certifyTime", res.getValue4().longValue());
             return map;
         } catch (Exception e) {
             logger.error(" registerWork exception, error message is {}", e.getMessage());

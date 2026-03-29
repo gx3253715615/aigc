@@ -12,3 +12,7 @@ bash contract2java.sh solidity -s contracts/code/CopyrightTransfer.sol -p com.bl
 
 
 删除合约中的注册，防止垃圾数据上链
+bean的注入顺序
+时区问题 --》 前端传入带时区的时间信息
+金额小数点问题 --> 改为分为单位
+时间戳问题 --> 改为毫秒

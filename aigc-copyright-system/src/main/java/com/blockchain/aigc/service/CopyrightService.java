@@ -26,8 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.blockchain.aigc.entity.table.CopyrightTransferTableDef.COPYRIGHT_TRANSFER;
@@ -143,7 +148,12 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
                     work.getWorkId(),
                     work.getFileHash(),
                     toWallet.getWalletAddress(),
-                    request.getTransferType());
+                    request.getTransferType(),
+                    request.getLicenseType(),
+                    request.getEffectiveTime(),
+                    request.getExpireTime(),
+                    request.getPrice()
+            );
 
             String txHash = receipt.getTransactionHash();
             transfer.setChainTxHash(txHash);
@@ -285,5 +295,41 @@ public class CopyrightService extends ServiceImpl<CopyrightTransferMapper, Copyr
         }
 
         return dto;
+    }
+
+    // 根据交易id查询链上交易详情
+    public Map<String, Object> getBlockInfoByTransferId(String transferId) {
+        Map<String, Object> transfer = copyrightTransferClient.getTransfer(transferId);
+        long effectiveTime = (long) transfer.get("effectiveTime");
+        long expireTime = (long) transfer.get("expireTime");
+        long transferTime = (long) transfer.get("transferTime");
+
+        ZoneId zone = ZoneId.systemDefault();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String effectiveTimeStr = Instant.ofEpochSecond(effectiveTime)
+                .atZone(zone)
+                .format(formatter);
+        String expireTimeStr = Instant.ofEpochSecond(expireTime)
+                .atZone(zone)
+                .format(formatter);
+        String transferTimeStr = Instant.ofEpochMilli(transferTime)
+                .atZone(zone)
+                .format(formatter);
+
+        transfer.put("effectiveTime", effectiveTimeStr);
+        transfer.put("expireTime", expireTimeStr);
+        transfer.put("transferTime", transferTimeStr);
+
+        return transfer;
+    }
+
+    // 根据交易id查询链上交易详情
+    public List<String> getTransferHistoryByWorkId(String workId) {
+        List transferIds = copyrightTransferClient.getWorkTransfers(workId);
+        List<String> res = new ArrayList<>();
+        for (Object transferId : transferIds) {
+            res.add(transferId.toString());
+        }
+        return res;
     }
 }

@@ -163,14 +163,14 @@ public class WorkService extends ServiceImpl<WorkMapper, Work> {
         return dto;
     }
 
-    public Map<String, Object> getWorkFromBlockChain(Long id) {
-        Work work = workMapper.selectOneById(id);
+    public Map<String, Object> getWorkFromBlockChain(String workId) {
+        Work work = workMapper.selectOneByQuery(QueryWrapper.create().select(WORK.DEFAULT_COLUMNS).where(WORK.WORK_ID.eq(workId)));
         if (work == null) {
             throw new GlobalException("作品不存在");
         }
-        Map<String, Object> map = copyrightCertClient.getWork(work.getWorkId());
+        Map<String, Object> map = copyrightCertClient.getWork(workId);
         // 时间戳转字符串
-        Long time = Long.parseLong((String) map.get("certifyTime"));
+        long time = (long) map.get("certifyTime");
         String formatTime = LocalDateTimeUtil.format(LocalDateTimeUtil.of(time), "yyyy-MM-dd HH:mm:ss");
         map.put("certifyTime", formatTime);
         map.put("workId", work.getWorkId());

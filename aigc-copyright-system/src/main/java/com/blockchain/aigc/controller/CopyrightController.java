@@ -10,10 +10,14 @@ import com.blockchain.aigc.enums.UserAuthEnum;
 import com.blockchain.aigc.service.CopyrightService;
 import com.blockchain.aigc.utils.UserUtil;
 import com.mybatisflex.core.paginate.Page;
+import org.apache.catalina.LifecycleState;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/copyright")
@@ -87,6 +91,32 @@ public class CopyrightController {
         try {
             TransferHistoryDTO transfer = copyrightService.getTransferById(id);
             return ApiResponse.success(transfer);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 查询区块链转让详情
+     */
+    @GetMapping("/blockchain/transfers/{id}")
+    public ApiResponse<Map<String, Object>> getTransferById(@PathVariable("id") String transferId) {
+        try {
+            Map<String, Object> blockInfo = copyrightService.getBlockInfoByTransferId(transferId);
+            return ApiResponse.success(blockInfo);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 查询区块链转让详情
+     */
+    @GetMapping("/blockchain/transfersHistory/{id}")
+    public ApiResponse<List<String>> getTransferHistoryByWorkId(@PathVariable("id") String workId) {
+        try {
+            List<String> transferIds = copyrightService.getTransferHistoryByWorkId(workId);
+            return ApiResponse.success(transferIds);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }

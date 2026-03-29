@@ -8,9 +8,6 @@ public class CopyrightTransferTableDef extends TableDef {
 
     public static final CopyrightTransferTableDef COPYRIGHT_TRANSFER = new CopyrightTransferTableDef();
 
-    /**
-     * 主键
-     */
     public final QueryColumn ID = new QueryColumn(this, "id");
 
     public final QueryColumn EXT = new QueryColumn(this, "ext");
@@ -19,9 +16,6 @@ public class CopyrightTransferTableDef extends TableDef {
 
     public final QueryColumn WORK_ID = new QueryColumn(this, "work_id");
 
-    /**
-     * 逻辑删除
-     */
     public final QueryColumn DELETED = new QueryColumn(this, "deleted");
 
     public final QueryColumn TO_USER_ID = new QueryColumn(this, "to_user_id");
@@ -32,9 +26,6 @@ public class CopyrightTransferTableDef extends TableDef {
 
     public final QueryColumn TRADE_DESC = new QueryColumn(this, "trade_desc");
 
-    /**
-     * 创建时间
-     */
     public final QueryColumn CREATE_TIME = new QueryColumn(this, "create_time");
 
     public final QueryColumn EXPIRE_TIME = new QueryColumn(this, "expire_time");
@@ -45,9 +36,6 @@ public class CopyrightTransferTableDef extends TableDef {
 
     public final QueryColumn TRANSFER_ID = new QueryColumn(this, "transfer_id");
 
-    /**
-     * 更新时间
-     */
     public final QueryColumn UPDATE_TIME = new QueryColumn(this, "update_time");
 
     public final QueryColumn BLOCK_NUMBER = new QueryColumn(this, "block_number");
@@ -60,18 +48,12 @@ public class CopyrightTransferTableDef extends TableDef {
 
     public final QueryColumn LICENSE_TYPE = new QueryColumn(this, "license_type");
 
-    /**
-     * 创建人id
-     */
     public final QueryColumn CREATE_USER_ID = new QueryColumn(this, "create_user_id");
 
     public final QueryColumn CURRENT_OWNER = new QueryColumn(this, "current_owner");
 
     public final QueryColumn TRANSFER_TYPE = new QueryColumn(this, "transfer_type");
 
-    /**
-     * 更新人id
-     */
     public final QueryColumn UPDATE_USER_ID = new QueryColumn(this, "update_user_id");
 
     public final QueryColumn EFFECTIVE_TIME = new QueryColumn(this, "effective_time");

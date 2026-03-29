@@ -208,7 +208,34 @@
           </el-select>
         </el-form-item>
         <el-form-item label="描述说明">
-          <el-input v-model="transferForm.tradeDesc" type="textarea" :rows="3" />
+          <el-input v-model="transferForm.tradeDesc" type="textarea" :rows="2" />
+        </el-form-item>
+
+        <el-form-item label="交易价格" prop="price">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <el-input-number v-model="transferForm.price" :min="0" :precision="2" :step="1" controls-position="right" style="flex: 1" />
+            <span>元</span>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="生效时间" prop="effectiveTime">
+          <el-date-picker
+            v-model="transferForm.effectiveTime"
+            type="datetime"
+            placeholder="选择生效时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="到期时间" prop="expireTime">
+          <el-date-picker
+            v-model="transferForm.expireTime"
+            type="datetime"
+            placeholder="选择到期时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -254,8 +281,23 @@ const transferForm = ref({
   workId: '',
   toUserId: 0,
   transferType: 'FULL_TRANSFER' as 'FULL_TRANSFER' | 'LICENSE_GRANT',
-  licenseType: undefined as 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE' | undefined,
+  licenseType: 'NONE' as 'NONE' | 'PERSONAL' | 'COMMERCIAL' | 'EXCLUSIVE' | undefined,
+  price: 0,
+  effectiveTime: '',
+  expireTime: '',
   tradeDesc: ''
+})
+
+// 监听转让类型变化，当选择全部转让时，自动设置许可类型为 NONE
+watch(() => transferForm.value.transferType, (newVal) => {
+  if (newVal === 'FULL_TRANSFER') {
+    transferForm.value.licenseType = 'NONE'
+  } else {
+    // 切换到许可授权时，清空之前自动设置的 NONE，让用户重新选择
+    if (transferForm.value.licenseType === 'NONE') {
+      transferForm.value.licenseType = undefined
+    }
+  }
 })
 
 const currentUserId = computed(() => {
@@ -473,9 +515,18 @@ const transferWork = (work: Work) => {
     return
   }
   
-  transferForm.value.workId = work.workId
-  transferForm.value.toUserId = 0
-  transferForm.value.tradeDesc = ''
+  // 重置并初始化表单
+  transferForm.value = {
+    workId: work.workId,
+    toUserId: 0,
+    transferType: 'FULL_TRANSFER',
+    licenseType: 'NONE', // 默认为 NONE
+    price: 0,
+    effectiveTime: '',
+    expireTime: '',
+    tradeDesc: ''
+  }
+  
   recipientKeyword.value = ''
   lookupTried.value = false
   lookupUser.value = null
@@ -492,20 +543,22 @@ const handleTransfer = async () => {
     ElMessage.warning('不能转让给自己')
     return
   }
+
+  if (transferForm.value.transferType === 'LICENSE_GRANT' && !transferForm.value.licenseType) {
+    ElMessage.warning('请选择许可类型')
+    return
+  }
+
   transfering.value = true
   try {
     await createTransfer({
-      workId: transferForm.value.workId,
-      toUserId: transferForm.value.toUserId,
-      transferType: transferForm.value.transferType,
-      licenseType: transferForm.value.licenseType,
-      tradeDesc: transferForm.value.tradeDesc
+      ...transferForm.value
     })
-    ElMessage.success('转让创建成功!')
+    ElMessage.success('转让申请已提交')
     transferVisible.value = false
-    loadWorks() // Refresh the works list
+    loadWorks()
   } catch (error: any) {
-    ElMessage.error('转让失败：' + error.message)
+    ElMessage.error('转让失败：' + (error.message || '操作失败'))
   } finally {
     transfering.value = false
   }

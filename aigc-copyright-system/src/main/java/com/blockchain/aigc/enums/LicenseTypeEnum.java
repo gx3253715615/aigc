@@ -6,7 +6,27 @@ package com.blockchain.aigc.enums;
  **/
 public enum LicenseTypeEnum {
     //个人 / 商用 / 独占
-    PERSONAL,
-    COMMERCIAL,
-    EXCLUSIVE
+    NONE(0),
+    PERSONAL(1),
+    COMMERCIAL(2),
+    EXCLUSIVE(3);
+
+    public int num;
+
+    LicenseTypeEnum(int num) {
+    }
+
+    // get
+    public int getNum() {
+        return num;
+    }
+
+    public static LicenseTypeEnum getLicenseType(int num) {
+        for (LicenseTypeEnum licenseTypeEnum : LicenseTypeEnum.values()) {
+            if (licenseTypeEnum.num == num) {
+                return licenseTypeEnum;
+            }
+        }
+        return null;
+    }
 }

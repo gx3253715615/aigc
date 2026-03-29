@@ -24,9 +24,18 @@ export interface BlockchainWorkInfo {
   workId: string
   fileHash: string
   author: string
-  certifyTime: string | number
+  owner: string
+  certifyTime: string
 }
 
-export const getWorkFromBlockchain = (id: string | number) => {
-  return request.get<BlockchainWorkInfo>(`/works/blockchain/${id}`)
+export const getWorkFromBlockchain = (workId: string) => {
+  return request.get<BlockchainWorkInfo>(`/works/blockchain/${workId}`)
+}
+
+export const getTransferHistoryByWorkId = (workId: string) => {
+  return request.get<string[]>(`/copyright/blockchain/transfersHistory/${workId}`)
+}
+
+export const getBlockchainTransferDetail = (transferId: string) => {
+  return request.get<any>(`/copyright/blockchain/transfers/${transferId}`)
 }
